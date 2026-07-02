@@ -1,0 +1,29 @@
+Package: biblioscape
+Type: Package
+Title: Research compendium for visualizing the scientific landscape through bibliographic network analysis
+Version: 0.0.1
+Authors@R: c(
+    person(given   = "Romain",
+           family  = "Frelat",
+           role    = c("aut", "cre", "cph"),
+           email   = "rom.frelat@gmail.com",
+           comment = c(ORCID = "0000-0002-8631-4398")))
+Description: Explore multi-layers network analysis for papers and authors
+URL: https://codeberg.org/frbcesab/Biblioscape
+BugReports: https://codeberg.org/frbcesab/Biblioscape
+License: GPL (>= 3)
+Encoding: UTF-8
+LazyData: true
+LazyDataCompression: xz
+Roxygen: list(markdown = TRUE)
+Imports: 
+    here,
+    rcrossref,
+    rentrez,
+    odyssey,
+    utils,
+    openalexR,
+    bibliometrix
+Depends: 
+    R (>= 3.5.0)
+Config/roxygen2/version: 8.0.0

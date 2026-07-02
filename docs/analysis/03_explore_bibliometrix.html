@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.36">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Romain Frelat">
+<meta name="dcterms.date" content="2026-07-02">
+
+<title>Exploration of bibliometrix R package</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-845c23b38eaddc0f92fda52bfe77a8c8.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-577706a10f52ffd9dd393f4456e9d04a.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-search-results"></div>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#data-loading-and-converting" id="toc-data-loading-and-converting" class="nav-link active" data-scroll-target="#data-loading-and-converting">Data loading and converting</a></li>
+  <li><a href="#simple-bibliometric-analysis" id="toc-simple-bibliometric-analysis" class="nav-link" data-scroll-target="#simple-bibliometric-analysis">Simple bibliometric Analysis</a>
+  <ul class="collapse">
+  <li><a href="#local-citations" id="toc-local-citations" class="nav-link" data-scroll-target="#local-citations">Local citations</a></li>
+  <li><a href="#zoom-on-authors" id="toc-zoom-on-authors" class="nav-link" data-scroll-target="#zoom-on-authors">Zoom on authors</a></li>
+  </ul></li>
+  <li><a href="#bibliographic-network-matrices" id="toc-bibliographic-network-matrices" class="nav-link" data-scroll-target="#bibliographic-network-matrices">Bibliographic network matrices</a>
+  <ul class="collapse">
+  <li><a href="#co-citation-network" id="toc-co-citation-network" class="nav-link" data-scroll-target="#co-citation-network">Co-Citation Network</a></li>
+  <li><a href="#keyword-co-occurrences" id="toc-keyword-co-occurrences" class="nav-link" data-scroll-target="#keyword-co-occurrences">Keyword co-occurrences</a></li>
+  </ul></li>
+  <li><a href="#thematic-map" id="toc-thematic-map" class="nav-link" data-scroll-target="#thematic-map">Thematic map</a>
+  <ul class="collapse">
+  <li><a href="#co-word-analysis" id="toc-co-word-analysis" class="nav-link" data-scroll-target="#co-word-analysis">Co-Word Analysis</a></li>
+  <li><a href="#thematic-map-1" id="toc-thematic-map-1" class="nav-link" data-scroll-target="#thematic-map-1">Thematic map</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Exploration of bibliometrix R package</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Romain Frelat </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">July 2, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>The objective is to explore the functionalities of the <a href="https://github.com/massimoaria/bibliometrix">bibliometrix R package</a>.</p>
+<p>The example case study is based on the references cited by projects financed under the <a href="https://www.fondationbiodiversite.fr/la-frb-en-action/programmes-et-projets/impacts-sur-la-biodiversite-terrestre-dans-lanthropocene/">FRB-MTE-OFB projects</a>. The references were cleaned and completed in the scripts <a href="https://codeberg.org/frbcesab/Biblioscape/src/branch/main/analysis/01_clean_references.R">01_clean_references.R</a> and <a href="https://codeberg.org/frbcesab/Biblioscape/src/branch/main/analysis/02_fetch_openalex.R">02_fetch_openalex.R</a>.</p>
+<p>The bibliometrix package has a nice <a href="https://www.bibliometrix.org/biblioshiny/">Shiny interface</a> that can be accessed locally with:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>bibliometrix<span class="sc">::</span><span class="fu">biblioshiny</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The <a href="https://codeberg.org/frbcesab/Biblioscape/src/branch/main/data/derived-data/mte_references_oa.rdata">openalex data</a> in can be loaded in the Shinyapp in the section Data &gt; Import raw files &gt; OpenAlexAPI.</p>
+<p>But here the objective is to use and explore the functions of <code>bibliometrix</code>.</p>
+<section id="data-loading-and-converting" class="level2">
+<h2 class="anchored" data-anchor-id="data-loading-and-converting">Data loading and converting</h2>
+<p>The data loading takes few minutes to run.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(bibliometrix)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>oadata <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"data"</span>, <span class="st">"derived-data"</span>, <span class="st">"mte_references_oa.rdata"</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>M <span class="ot">&lt;-</span> bibliometrix<span class="sc">::</span><span class="fu">convert2df</span>(</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">file =</span> oadata,</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">dbsource =</span> <span class="st">"openalex_api"</span>,</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">format =</span> <span class="st">"api"</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Converting your openalex_api collection into a bibliographic dataframe</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Done!
+
+
+Removed  97 duplicated documents</code></pre>
+</div>
+</div>
+<!-- 
+Removed  97 duplicated documents
+Warning message:
+3 record(s) have a suspicious authorship list
+(likely OpenAlex source corruption: cited-reference authors absorbed into the author field).
+Flagged in M$AU_FLAG; inspect row(s) 259, 936, 1134 before running collaboration networks. 
+-->
+<p>We can check the quality of the bibliometric data.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>com <span class="ot">&lt;-</span> <span class="fu">missingData</span>(M)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(com<span class="sc">$</span>mandatoryTags)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   tag          description missing_counts missing_pct             status
+1   DI                  DOI              0        0.00          Excellent
+2   DT        Document Type              0        0.00          Excellent
+3   DE             Keywords              0        0.00          Excellent
+4   LA             Language              0        0.00          Excellent
+5   PY     Publication Year              0        0.00          Excellent
+6   TI                Title              0        0.00          Excellent
+7   TC       Total Citation              0        0.00          Excellent
+8   AU               Author              8        0.76               Good
+9   SO              Journal             21        2.01               Good
+10  ID        Keywords Plus             28        2.67               Good
+11  RP Corresponding Author             37        3.53               Good
+12  CR     Cited References             44        4.20               Good
+13  C1          Affiliation             47        4.49               Good
+14  AB             Abstract            342       32.66               Poor
+15  WC   Science Categories           1047      100.00 Completely missing</code></pre>
+</div>
+</div>
+</section>
+<section id="simple-bibliometric-analysis" class="level2">
+<h2 class="anchored" data-anchor-id="simple-bibliometric-analysis">Simple bibliometric Analysis</h2>
+<p>A recommended first step is a descriptive analysis of the bibliographic data with the function <a href="https://cran.r-project.org/web/packages/bibliometrix/refman/bibliometrix.html#biblioAnalysis"><code>biblioAnalysis</code></a>. It calculates:</p>
+<ul>
+<li>Annual scientific production</li>
+<li>Most productive authors</li>
+<li>Most cited manuscripts</li>
+<li>Most productive countries</li>
+<li>Total citations per country</li>
+<li>Most relevant sources (journals)</li>
+<li>Most frequent keywords</li>
+</ul>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">biblioAnalysis</span>(M, <span class="at">sep =</span> <span class="st">";"</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>S <span class="ot">&lt;-</span> <span class="fu">summary</span>(<span class="at">object =</span> results, <span class="at">k =</span> <span class="dv">10</span>, <span class="at">pause =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+
+MAIN INFORMATION ABOUT DATA
+
+ Timespan                              1937 : 2026 
+ Sources (Journals, Books, etc)        305 
+ Documents                             1047 
+ Annual Growth Rate %                  0.78 
+ Document Average Age                  8.77 
+ Average citations per doc             314.1 
+ Average citations per year per doc    25.17 
+ References                            50035 
+ 
+DOCUMENT TYPES                     
+ article           862 
+ book              8 
+ book-chapter      18 
+ dataset           4 
+ editorial         2 
+ erratum           1 
+ letter            12 
+ other             2 
+ peer-review       2 
+ preprint          12 
+ report            1 
+ review            123 
+ 
+DOCUMENT CONTENTS
+ Keywords Plus (ID)                    1185 
+ Author's Keywords (DE)                1764 
+ 
+AUTHORS
+ Authors                               5962 
+ Author Appearances                    9425 
+ Authors of single-authored docs       57 
+ 
+AUTHORS COLLABORATION
+ Single-authored docs                  67 
+ Documents per Author                  0.176 
+ Co-Authors per Doc                    9 
+ International co-authorships %        53.77 
+ 
+
+Annual Scientific Production
+
+ Year    Articles
+    1937        1
+    1968        1
+    1972        1
+    1973        1
+    1983        1
+    1985        2
+    1989        1
+    1994        1
+    1995        1
+    1997        5
+    1998        4
+    1999        1
+    2000        3
+    2001        4
+    2002        4
+    2003        4
+    2004        8
+    2005       12
+    2006        8
+    2007        9
+    2008       15
+    2009       20
+    2010       11
+    2011       21
+    2012       14
+    2013       21
+    2014       32
+    2015       32
+    2016       49
+    2017       67
+    2018      109
+    2019      110
+    2020      143
+    2021      167
+    2022      108
+    2023       29
+    2024       11
+    2025       14
+    2026        2
+
+Annual Percentage Growth Rate 0.78 
+
+
+Most Productive Authors
+
+      Authors        Articles          Authors        Articles Fractionalized
+1  CYRILLE VIOLLE          43 CYRILLE VIOLLE                             5.57
+2  WILFRIED THUILLER       26 SANDRINE PETIT                             4.04
+3  ADRIEN RUSCH            22 ALMO FARINA                                3.70
+4  SANDRINE PETIT          22 PETER H. VERBURG                           3.60
+5  JONATHAN LENOIR         20 CÉLINE CLAUZEL                             3.26
+6  FRANÇOIS MUNOZ          19 JENS‐CHRISTIAN SVENNING                    3.25
+7  MICKAËL HEDDE           18 WILFRIED THUILLER                          3.12
+8  GUILLAUME FRIED         17 FRANÇOIS MUNOZ                             2.99
+9  AUDREY ALIGNIER         16 JOAN MARTÍNEZ ALIER                        2.79
+10 DANIEL CLUZEAU          16 GUILLAUME FRIED                            2.77
+
+
+Top manuscripts per citations
+
+                  Paper                                       DOI    TC TCperYear   NTC
+1  YVES ROSSEEL, 2012,           10.18637/jss.v048.i02            25347      1690  9.22
+2  STEPHEN E. FICK, 2017,        10.1002/joc.5086                 16710      1671 35.84
+3  JOHAN ROCKSTRÖM, 2009,        10.1038/461472a                  12863       715  9.55
+4  ЭЛИНОР ОСТРОМ, 2009,          10.1126/science.1172133           8185       455  6.08
+5  DAVID U. HOOPER, 2005,        10.1890/04-0922                   7922       360  7.29
+6  DAVID TILMAN, 2011,           10.1073/pnas.1116437108           7491       468  8.43
+7  ALEXANDRA‐MARIA KLEIN, 2006,  10.1098/rspb.2006.3721            7076       337  4.55
+8  JAMES N. GALLOWAY, 2008,      10.1126/science.1136674           6974       367  6.11
+9  PETER CHESSON, 2000,          10.1146/annurev.ecolsys.31.1.343  6648       246  2.41
+10 JAMES J. ELSER, 2007,         10.1111/j.1461-0248.2007.01113.x  4593       230  6.11
+
+
+Corresponding Author's Countries
+
+         Country Articles   Freq SCP MCP MCP_Ratio
+1  FRANCE             467 0.4082 195 272     0.582
+2  USA                111 0.0970  59  52     0.468
+3  GERMANY             94 0.0822  14  80     0.851
+4  UNITED KINDOM       87 0.0760  29  58     0.667
+5  NA                  66 0.0577  58   8     0.121
+6  CANADA              42 0.0367  12  30     0.714
+7  SWITZERLAND         42 0.0367   9  33     0.786
+8  NETHERLANDS         26 0.0227  10  16     0.615
+9  AUSTRALIA           24 0.0210   5  19     0.792
+10 ITALY               24 0.0210  10  14     0.583
+
+
+SCP: Single Country Publications
+
+MCP: Multiple Country Publications
+
+
+Total Citations per Country
+
+                       Country      Total Citations Average Article Citations
+1  USA                                        89387                     843.3
+2  NA                                         40406                     631.3
+3  FRANCE                                     31800                      93.5
+4  UNITED KINDOM                              31256                     395.6
+5  GERMANY                                    28005                     368.5
+6  AUSTRALIA                                  15419                     642.5
+7  SWEDEN                                     14683                    1334.8
+8  CHINA                                      10577                     705.1
+9  NETHERLANDS                                 8949                     344.2
+10 CANADA                                      7462                     207.3
+
+
+Most Relevant Sources
+
+                         Sources        Articles
+1  AGRICULTURE ECOSYSTEMS &amp; ENVIRONMENT       33
+2  ECOLOGY LETTERS                            31
+3  JOURNAL OF APPLIED ECOLOGY                 23
+4  SCIENCE                                    23
+5  ECOLOGY                                    22
+6  LANDSCAPE ECOLOGY                          21
+7  NATURE ECOLOGY &amp; EVOLUTION                 21
+8  THE SCIENCE OF THE TOTAL ENVIRONMENT       20
+9  TRENDS IN ECOLOGY &amp; EVOLUTION              20
+10 BIOLOGICAL CONSERVATION                    19
+
+
+Most Relevant Keywords
+
+           Author Keywords (DE)      Articles Keywords-Plus (ID)     Articles
+1  ECOLOGY                                882  ECOLOGY                    423
+2  BIOLOGY                                841  BIODIVERSITY               279
+3  GEOGRAPHY                              531  BIOLOGY                    203
+4  ENVIRONMENTAL SCIENCE                  395  GEOGRAPHY                  148
+5  BIODIVERSITY                           368  SPECIES RICHNESS           135
+6  HABITAT                                272  HABITAT                    128
+7  ECOSYSTEM                              243  ENVIRONMENTAL SCIENCE       98
+8  COMPUTER SCIENCE                       225  ECOSYSTEM                   91
+9  ENVIRONMENTAL RESOURCE MANAGEMENT      221  ABUNDANCE                   81
+10 POPULATION                             183  AGRICULTURE                 79</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="at">x =</span> results, <span class="at">k =</span> <span class="dv">10</span>, <span class="at">pause =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="03_explore_bibliometrix_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="03_explore_bibliometrix_files/figure-html/unnamed-chunk-4-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="03_explore_bibliometrix_files/figure-html/unnamed-chunk-4-3.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="03_explore_bibliometrix_files/figure-html/unnamed-chunk-4-4.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="03_explore_bibliometrix_files/figure-html/unnamed-chunk-4-5.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<section id="local-citations" class="level3">
+<h3 class="anchored" data-anchor-id="local-citations">Local citations</h3>
+<p>Local citations measure how many times an author (or a document) included in the collection have been cited within the collection.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>CR <span class="ot">&lt;-</span> <span class="fu">localCitations</span>(M, <span class="at">sep =</span> <span class="st">";"</span>)</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>CR<span class="sc">$</span>Authors[<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>, ]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                       Author LocalCitations
+5007          TEJA TSCHARNTKE            188
+4153             PÉTER BATÁRY            166
+4379        RICCARDO BOMMARCO            142
+1110           CYRILLE VIOLLE            138
+2172  INGOLF STEFFAN‐DEWENTER            132
+5421              YANN CLOUGH            126
+75               ADRIEN RUSCH            113
+822        CARSTEN F. DORMANN            103
+300          ANDREA HOLZSCHUH            102
+5269      VINCENT BRETAGNOLLE            100</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>CR<span class="sc">$</span>Papers[<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>, ]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                         Paper                              DOI Year LCS  GCS
+465     SANDRA LAVOREL, 2002,  10.1046/j.1365-2435.2002.00664.x 2002  48 3348
+52         TIM NEWBOLD, 2015,               10.1038/nature14324 2015  44 4235
+331    TEJA TSCHARNTKE, 2012,  10.1111/j.1469-185x.2011.00216.x 2012  40 2056
+461    DAVID U. HOOPER, 2005,                   10.1890/04-0922 2005  34 7922
+823       ÉRIC GARNIER, 2004,                   10.1890/03-0799 2004  34 2258
+546 CASPAR A. HALLMANN, 2017,      10.1371/journal.pone.0185809 2017  31 3422
+59       CLÉLIA SIRAMI, 2019,           10.1073/pnas.1906419116 2019  28  538
+242    JANNE BENGTSSON, 2005,  10.1111/j.1365-2664.2005.01005.x 2005  27 1708
+198     DANIEL S. KARP, 2018,           10.1073/pnas.1800042115 2018  26  634
+289    EMILY A. MARTIN, 2019,                 10.1111/ele.13265 2019  26  615</code></pre>
+</div>
+</div>
+</section>
+<section id="zoom-on-authors" class="level3">
+<h3 class="anchored" data-anchor-id="zoom-on-authors">Zoom on authors</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>DF <span class="ot">&lt;-</span> <span class="fu">dominance</span>(results, <span class="at">k =</span> <span class="dv">10</span>)</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>DF</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>              Author Dominance Factor Tot Articles Single-Authored Multi-Authored First-Authored Rank by Articles
+1     CYRILLE VIOLLE               NA           43              NA             NA              5                1
+2  WILFRIED THUILLER               NA           26              NA             NA              1                2
+3       ADRIEN RUSCH               NA           22              NA             NA              1                3
+4     SANDRINE PETIT               NA           22              NA             NA              4                3
+5    JONATHAN LENOIR               NA           20              NA             NA              4                5
+6     FRANÇOIS MUNOZ               NA           19              NA             NA              3                6
+7      MICKAËL HEDDE               NA           18              NA             NA              1                7
+8    GUILLAUME FRIED               NA           17              NA             NA              4                8
+9    AUDREY ALIGNIER               NA           16              NA             NA              2                9
+10    DANIEL CLUZEAU               NA           16              NA             NA              1                9
+   Rank by DF
+1           1
+2           2
+3           3
+4           4
+5           5
+6           6
+7           7
+8           8
+9           9
+10         10</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Top-Authors’ Productivity over the Time</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>topAU <span class="ot">&lt;-</span> <span class="fu">authorProdOverTime</span>(M, <span class="at">k =</span> <span class="dv">10</span>, <span class="at">graph =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="03_explore_bibliometrix_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<!-- 
+### Life cycle analysis
+data <- M %>% group_by(PY) %>% count()
+LC <- lifeCycle(data, forecast_years = 20, plot = TRUE, verbose = FALSE) 
+-->
+</section>
+</section>
+<section id="bibliographic-network-matrices" class="level2">
+<h2 class="anchored" data-anchor-id="bibliographic-network-matrices">Bibliographic network matrices</h2>
+<section id="co-citation-network" class="level3">
+<h3 class="anchored" data-anchor-id="co-citation-network">Co-Citation Network</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>NetMatrix <span class="ot">&lt;-</span> <span class="fu">biblioNetwork</span>(</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  M,</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">analysis =</span> <span class="st">"co-citation"</span>,</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">network =</span> <span class="st">"references"</span>,</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">n =</span> <span class="dv">30</span>,</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">sep =</span> <span class="st">";"</span></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot the network</span></span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>net <span class="ot">&lt;-</span> <span class="fu">networkPlot</span>(</span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>  NetMatrix,</span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">Title =</span> <span class="st">"Co-Citation Network"</span>,</span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">type =</span> <span class="st">"fruchterman"</span>,</span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">size =</span> T,</span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">remove.multiple =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">labelsize =</span> <span class="fl">0.7</span>,</span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">edgesize =</span> <span class="dv">5</span></span>
+<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="03_explore_bibliometrix_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="keyword-co-occurrences" class="level3">
+<h3 class="anchored" data-anchor-id="keyword-co-occurrences">Keyword co-occurrences</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create keyword co-occurrences network</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>NetMatrix <span class="ot">&lt;-</span> <span class="fu">biblioNetwork</span>(</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  M,</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">analysis =</span> <span class="st">"co-occurrences"</span>,</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">network =</span> <span class="st">"keywords"</span>,</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">sep =</span> <span class="st">";"</span></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot the network</span></span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>net <span class="ot">&lt;-</span> <span class="fu">networkPlot</span>(</span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>  NetMatrix,</span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">normalize =</span> <span class="st">"association"</span>,</span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">weighted =</span> T,</span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">n =</span> <span class="dv">30</span>,</span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">Title =</span> <span class="st">"Keyword Co-occurrences"</span>,</span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">type =</span> <span class="st">"fruchterman"</span>,</span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">size =</span> T,</span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">edgesize =</span> <span class="dv">5</span>,</span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">labelsize =</span> <span class="fl">0.7</span></span>
+<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="03_explore_bibliometrix_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="thematic-map" class="level2">
+<h2 class="anchored" data-anchor-id="thematic-map">Thematic map</h2>
+<section id="co-word-analysis" class="level3">
+<h3 class="anchored" data-anchor-id="co-word-analysis">Co-Word Analysis</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>CS <span class="ot">&lt;-</span> <span class="fu">conceptualStructure</span>(</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  M,</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">field =</span> <span class="st">"ID"</span>,</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">method =</span> <span class="st">"MCA"</span>,</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">minDegree =</span> <span class="dv">10</span>,</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">clust =</span> <span class="dv">6</span>,</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">stemming =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">labelsize =</span> <span class="dv">15</span>,</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">documents =</span> <span class="dv">20</span>,</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">graph =</span> <span class="cn">FALSE</span></span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(CS<span class="sc">$</span>graph_terms)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="03_explore_bibliometrix_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># plot(CS$graph_dendogram)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="thematic-map-1" class="level3">
+<h3 class="anchored" data-anchor-id="thematic-map-1">Thematic map</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>thematicMapResults <span class="ot">&lt;-</span> <span class="fu">thematicMap</span>(</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>  M,</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">field =</span> <span class="st">"DE"</span>,</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">n =</span> <span class="dv">250</span>,</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">minfreq =</span> <span class="dv">5</span>,</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">stemming =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">size =</span> <span class="fl">0.3</span>,</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">n.labels =</span> <span class="dv">3</span>,</span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">repel =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">cluster =</span> <span class="st">"louvain"</span></span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(thematicMapResults<span class="sc">$</span>map)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="03_explore_bibliometrix_files/figure-html/unnamed-chunk-11-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(thematicMapResults<span class="sc">$</span>net<span class="sc">$</span>graph)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="03_explore_bibliometrix_files/figure-html/unnamed-chunk-11-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

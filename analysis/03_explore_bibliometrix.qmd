@@ -1,0 +1,197 @@
+---
+title: "Exploration of bibliometrix R package"
+author: Romain Frelat
+date: today
+format: 
+  html:
+    toc: true
+execute:
+  echo: true
+  warning: false
+---
+
+
+The objective is to explore the functionalities of the [bibliometrix R package](https://github.com/massimoaria/bibliometrix).   
+
+The example case study is based on the references cited by projects financed under the [FRB-MTE-OFB projects](https://www.fondationbiodiversite.fr/la-frb-en-action/programmes-et-projets/impacts-sur-la-biodiversite-terrestre-dans-lanthropocene/). The references were cleaned and completed in the scripts [01_clean_references.R](https://codeberg.org/frbcesab/Biblioscape/src/branch/main/analysis/01_clean_references.R) and [02_fetch_openalex.R](https://codeberg.org/frbcesab/Biblioscape/src/branch/main/analysis/02_fetch_openalex.R).  
+
+The bibliometrix package has a nice [Shiny interface](https://www.bibliometrix.org/biblioshiny/) that can be accessed locally with:
+```{r}
+#| eval: false
+bibliometrix::biblioshiny()
+```
+
+The [openalex data](https://codeberg.org/frbcesab/Biblioscape/src/branch/main/data/derived-data/mte_references_oa.rdata) in can be loaded in the Shinyapp in the section Data > Import raw files > OpenAlexAPI.   
+
+But here the objective is to use and explore the functions of `bibliometrix`.
+
+## Data loading and converting
+
+The data loading takes few minutes to run.
+
+```{r}
+library(bibliometrix)
+oadata <- here::here("data", "derived-data", "mte_references_oa.rdata")
+
+M <- bibliometrix::convert2df(
+  file = oadata,
+  dbsource = "openalex_api",
+  format = "api"
+)
+```
+
+<!-- 
+Removed  97 duplicated documents
+Warning message:
+3 record(s) have a suspicious authorship list
+(likely OpenAlex source corruption: cited-reference authors absorbed into the author field).
+Flagged in M$AU_FLAG; inspect row(s) 259, 936, 1134 before running collaboration networks. 
+-->
+
+We can check the quality of the bibliometric data.
+
+```{r}
+com <- missingData(M)
+print(com$mandatoryTags)
+```
+
+## Simple bibliometric Analysis
+
+A recommended first step is a descriptive analysis of the bibliographic data with the function [`biblioAnalysis`](https://cran.r-project.org/web/packages/bibliometrix/refman/bibliometrix.html#biblioAnalysis). It calculates:
+
+- Annual scientific production
+- Most productive authors
+- Most cited manuscripts
+- Most productive countries
+- Total citations per country
+- Most relevant sources (journals)
+- Most frequent keywords
+
+```{r}
+results <- biblioAnalysis(M, sep = ";")
+S <- summary(object = results, k = 10, pause = FALSE)
+plot(x = results, k = 10, pause = FALSE)
+```
+
+
+### Local citations
+
+Local citations measure how many times an author (or a document) included in the collection have been cited within the collection.
+
+```{r}
+CR <- localCitations(M, sep = ";")
+CR$Authors[1:10, ]
+CR$Papers[1:10, ]
+```
+
+### Zoom on authors
+
+```{r}
+DF <- dominance(results, k = 10)
+DF
+```
+
+```{r}
+# Top-Authors’ Productivity over the Time
+topAU <- authorProdOverTime(M, k = 10, graph = TRUE)
+```
+
+
+<!-- 
+### Life cycle analysis
+data <- M %>% group_by(PY) %>% count()
+LC <- lifeCycle(data, forecast_years = 20, plot = TRUE, verbose = FALSE) 
+-->
+
+
+
+## Bibliographic network matrices
+
+### Co-Citation Network
+
+```{r}
+NetMatrix <- biblioNetwork(
+  M,
+  analysis = "co-citation",
+  network = "references",
+  n = 30,
+  sep = ";"
+)
+
+# Plot the network
+net <- networkPlot(
+  NetMatrix,
+  Title = "Co-Citation Network",
+  type = "fruchterman",
+  size = T,
+  remove.multiple = FALSE,
+  labelsize = 0.7,
+  edgesize = 5
+)
+```
+
+### Keyword co-occurrences
+
+
+```{r}
+# Create keyword co-occurrences network
+NetMatrix <- biblioNetwork(
+  M,
+  analysis = "co-occurrences",
+  network = "keywords",
+  sep = ";"
+)
+
+# Plot the network
+net <- networkPlot(
+  NetMatrix,
+  normalize = "association",
+  weighted = T,
+  n = 30,
+  Title = "Keyword Co-occurrences",
+  type = "fruchterman",
+  size = T,
+  edgesize = 5,
+  labelsize = 0.7
+)
+```
+
+
+## Thematic map
+
+### Co-Word Analysis
+
+```{r}
+CS <- conceptualStructure(
+  M,
+  field = "ID",
+  method = "MCA",
+  minDegree = 10,
+  clust = 6,
+  stemming = FALSE,
+  labelsize = 15,
+  documents = 20,
+  graph = FALSE
+)
+plot(CS$graph_terms)
+# plot(CS$graph_dendogram)
+```
+
+### Thematic map
+
+```{r}
+thematicMapResults <- thematicMap(
+  M,
+  field = "DE",
+  n = 250,
+  minfreq = 5,
+  stemming = FALSE,
+  size = 0.3,
+  n.labels = 3,
+  repel = TRUE,
+  cluster = "louvain"
+)
+plot(thematicMapResults$map)
+
+plot(thematicMapResults$net$graph)
+```
