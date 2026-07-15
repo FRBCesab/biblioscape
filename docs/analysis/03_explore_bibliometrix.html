@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Romain Frelat">
-<meta name="dcterms.date" content="2026-07-02">
+<meta name="dcterms.date" content="2026-07-15">
 
 <title>Exploration of bibliometrix R package</title>
 <style>
@@ -163,7 +163,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">July 2, 2026</p>
+      <p class="date">July 15, 2026</p>
     </div>
   </div>
   
@@ -182,7 +182,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>bibliometrix<span class="sc">::</span><span class="fu">biblioshiny</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>The <a href="https://codeberg.org/frbcesab/Biblioscape/src/branch/main/data/derived-data/mte_references_oa.rdata">openalex data</a> in can be loaded in the Shinyapp in the section Data &gt; Import raw files &gt; OpenAlexAPI.</p>
-<p>But here the objective is to use and explore the functions of <code>bibliometrix</code>.</p>
+<p>But here the objective is to use and explore the functions of <a href="https://github.com/massimoaria/bibliometrix"><code>bibliometrix</code> package</a>.</p>
 <section id="data-loading-and-converting" class="level2">
 <h2 class="anchored" data-anchor-id="data-loading-and-converting">Data loading and converting</h2>
 <p>The data loading takes few minutes to run.</p>
@@ -226,13 +226,13 @@ Flagged in M$AU_FLAG; inspect row(s) 259, 936, 1134 before running collaboration
 5   PY     Publication Year              0        0.00          Excellent
 6   TI                Title              0        0.00          Excellent
 7   TC       Total Citation              0        0.00          Excellent
-8   AU               Author              8        0.76               Good
+8   AU               Author              9        0.86               Good
 9   SO              Journal             21        2.01               Good
 10  ID        Keywords Plus             28        2.67               Good
 11  RP Corresponding Author             37        3.53               Good
 12  CR     Cited References             44        4.20               Good
-13  C1          Affiliation             47        4.49               Good
-14  AB             Abstract            342       32.66               Poor
+13  C1          Affiliation             48        4.58               Good
+14  AB             Abstract            343       32.76               Poor
 15  WC   Science Categories           1047      100.00 Completely missing</code></pre>
 </div>
 </div>
@@ -262,8 +262,8 @@ MAIN INFORMATION ABOUT DATA
  Documents                             1047 
  Annual Growth Rate %                  0.78 
  Document Average Age                  8.77 
- Average citations per doc             314.1 
- Average citations per year per doc    25.17 
+ Average citations per doc             316.5 
+ Average citations per year per doc    25.4 
  References                            50035 
  
 DOCUMENT TYPES                     
@@ -285,15 +285,15 @@ DOCUMENT CONTENTS
  Author's Keywords (DE)                1764 
  
 AUTHORS
- Authors                               5962 
- Author Appearances                    9425 
+ Authors                               5878 
+ Author Appearances                    9327 
  Authors of single-authored docs       57 
  
 AUTHORS COLLABORATION
- Single-authored docs                  67 
- Documents per Author                  0.176 
- Co-Authors per Doc                    9 
- International co-authorships %        53.77 
+ Single-authored docs                  68 
+ Documents per Author                  0.178 
+ Co-Authors per Doc                    8.91 
+ International co-authorships %        53.68 
  
 
 Annual Scientific Production
@@ -360,26 +360,26 @@ Most Productive Authors
 Top manuscripts per citations
 
                   Paper                                       DOI    TC TCperYear   NTC
-1  YVES ROSSEEL, 2012,           10.18637/jss.v048.i02            25347      1690  9.22
-2  STEPHEN E. FICK, 2017,        10.1002/joc.5086                 16710      1671 35.84
-3  JOHAN ROCKSTRÖM, 2009,        10.1038/461472a                  12863       715  9.55
-4  ЭЛИНОР ОСТРОМ, 2009,          10.1126/science.1172133           8185       455  6.08
-5  DAVID U. HOOPER, 2005,        10.1890/04-0922                   7922       360  7.29
-6  DAVID TILMAN, 2011,           10.1073/pnas.1116437108           7491       468  8.43
-7  ALEXANDRA‐MARIA KLEIN, 2006,  10.1098/rspb.2006.3721            7076       337  4.55
-8  JAMES N. GALLOWAY, 2008,      10.1126/science.1136674           6974       367  6.11
-9  PETER CHESSON, 2000,          10.1146/annurev.ecolsys.31.1.343  6648       246  2.41
-10 JAMES J. ELSER, 2007,         10.1111/j.1461-0248.2007.01113.x  4593       230  6.11
+1  YVES ROSSEEL, 2012,           10.18637/jss.v048.i02            25631      1709  9.24
+2  STEPHEN E. FICK, 2017,        10.1002/joc.5086                 16920      1692 35.93
+3  JOHAN ROCKSTRÖM, 2009,        10.1038/461472a                  12953       720  9.55
+4  ЭЛИНОР ОСТРОМ, 2009,          10.1126/science.1172133           8267       459  6.09
+5  DAVID U. HOOPER, 2005,        10.1890/04-0922                   7949       361  7.29
+6  DAVID TILMAN, 2011,           10.1073/pnas.1116437108           7537       471  8.44
+7  ALEXANDRA‐MARIA KLEIN, 2006,  10.1098/rspb.2006.3721            7135       340  4.56
+8  JAMES N. GALLOWAY, 2008,      10.1126/science.1136674           7008       369  6.10
+9  PETER CHESSON, 2000,          10.1146/annurev.ecolsys.31.1.343  6688       248  2.41
+10 JAMES J. ELSER, 2007,         10.1111/j.1461-0248.2007.01113.x  4616       231  6.12
 
 
 Corresponding Author's Countries
 
          Country Articles   Freq SCP MCP MCP_Ratio
-1  FRANCE             467 0.4082 195 272     0.582
+1  FRANCE             466 0.4073 195 271     0.582
 2  USA                111 0.0970  59  52     0.468
 3  GERMANY             94 0.0822  14  80     0.851
 4  UNITED KINDOM       87 0.0760  29  58     0.667
-5  NA                  66 0.0577  58   8     0.121
+5  NA                  66 0.0577  59   7     0.106
 6  CANADA              42 0.0367  12  30     0.714
 7  SWITZERLAND         42 0.0367   9  33     0.786
 8  NETHERLANDS         26 0.0227  10  16     0.615
@@ -395,16 +395,16 @@ MCP: Multiple Country Publications
 Total Citations per Country
 
                        Country      Total Citations Average Article Citations
-1  USA                                        89387                     843.3
-2  NA                                         40406                     631.3
-3  FRANCE                                     31800                      93.5
-4  UNITED KINDOM                              31256                     395.6
-5  GERMANY                                    28005                     368.5
-6  AUSTRALIA                                  15419                     642.5
-7  SWEDEN                                     14683                    1334.8
-8  CHINA                                      10577                     705.1
-9  NETHERLANDS                                 8949                     344.2
-10 CANADA                                      7462                     207.3
+1  USA                                        90056                     849.6
+2  NA                                         40721                     636.3
+3  FRANCE                                     31486                      92.9
+4  UNITED KINDOM                              31454                     398.2
+5  GERMANY                                    28363                     373.2
+6  AUSTRALIA                                  15512                     646.3
+7  SWEDEN                                     14782                    1343.8
+8  CHINA                                      10660                     710.7
+9  NETHERLANDS                                 8999                     346.1
+10 CANADA                                      7488                     208.0
 
 
 Most Relevant Sources
@@ -481,30 +481,30 @@ Most Relevant Keywords
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>CR<span class="sc">$</span>Authors[<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>, ]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>                       Author LocalCitations
-5007          TEJA TSCHARNTKE            188
-4153             PÉTER BATÁRY            166
-4379        RICCARDO BOMMARCO            142
-1110           CYRILLE VIOLLE            138
-2172  INGOLF STEFFAN‐DEWENTER            132
-5421              YANN CLOUGH            126
-75               ADRIEN RUSCH            113
-822        CARSTEN F. DORMANN            103
-300          ANDREA HOLZSCHUH            102
-5269      VINCENT BRETAGNOLLE            100</code></pre>
+4930          TEJA TSCHARNTKE            188
+4092             PÉTER BATÁRY            166
+4314        RICCARDO BOMMARCO            142
+1092           CYRILLE VIOLLE            138
+2138  INGOLF STEFFAN‐DEWENTER            132
+5338              YANN CLOUGH            126
+61               ADRIEN RUSCH            113
+803        CARSTEN F. DORMANN            103
+286          ANDREA HOLZSCHUH            102
+5190      VINCENT BRETAGNOLLE            100</code></pre>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>CR<span class="sc">$</span>Papers[<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>, ]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>                         Paper                              DOI Year LCS  GCS
-465     SANDRA LAVOREL, 2002,  10.1046/j.1365-2435.2002.00664.x 2002  48 3348
-52         TIM NEWBOLD, 2015,               10.1038/nature14324 2015  44 4235
-331    TEJA TSCHARNTKE, 2012,  10.1111/j.1469-185x.2011.00216.x 2012  40 2056
-461    DAVID U. HOOPER, 2005,                   10.1890/04-0922 2005  34 7922
-823       ÉRIC GARNIER, 2004,                   10.1890/03-0799 2004  34 2258
-546 CASPAR A. HALLMANN, 2017,      10.1371/journal.pone.0185809 2017  31 3422
-59       CLÉLIA SIRAMI, 2019,           10.1073/pnas.1906419116 2019  28  538
-242    JANNE BENGTSSON, 2005,  10.1111/j.1365-2664.2005.01005.x 2005  27 1708
-198     DANIEL S. KARP, 2018,           10.1073/pnas.1800042115 2018  26  634
-289    EMILY A. MARTIN, 2019,                 10.1111/ele.13265 2019  26  615</code></pre>
+465     SANDRA LAVOREL, 2002,  10.1046/j.1365-2435.2002.00664.x 2002  48 3359
+52         TIM NEWBOLD, 2015,               10.1038/nature14324 2015  44 4261
+331    TEJA TSCHARNTKE, 2012,  10.1111/j.1469-185x.2011.00216.x 2012  40 2078
+461    DAVID U. HOOPER, 2005,                   10.1890/04-0922 2005  34 7949
+823       ÉRIC GARNIER, 2004,                   10.1890/03-0799 2004  34 2268
+546 CASPAR A. HALLMANN, 2017,      10.1371/journal.pone.0185809 2017  31 3443
+59       CLÉLIA SIRAMI, 2019,           10.1073/pnas.1906419116 2019  28  544
+242    JANNE BENGTSSON, 2005,  10.1111/j.1365-2664.2005.01005.x 2005  27 1712
+198     DANIEL S. KARP, 2018,           10.1073/pnas.1800042115 2018  26  639
+289    EMILY A. MARTIN, 2019,                 10.1111/ele.13265 2019  26  620</code></pre>
 </div>
 </div>
 </section>

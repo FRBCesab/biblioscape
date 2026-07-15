@@ -12,7 +12,7 @@ df_list <- lapply(ref_list, function(x) {
   read.csv(x)[, c("Project", "DOI", "Title", "Year", "Relation")]
 })
 df <- do.call(rbind, df_list)
-nrow(df) # 1291 references
+nrow(df) # 1306 references
 length(unique(df$Project)) # 24 projects
 
 # remove duplicates, and keep Output>Top5>Proposal
@@ -24,7 +24,7 @@ df$Relation <- factor(
 df <- df[order(df$Project, df$Relation, df$Title, decreasing = TRUE), ]
 # remove duplicates # sum(duplicated(ref))
 df <- df[!duplicated(df[, c("Project", "DOI", "Title", "Year")]), ]
-nrow(df) # 1239 references without duplicates
+nrow(df) # 1255 references without duplicates
 
 # table(df$Project)
 # table(df$Project, df$Year)
@@ -47,15 +47,17 @@ keepR <- !is.na(df$DOI) | (df$Title != "" & !is.na(df$Year))
 df <- df[keepR, ]
 
 # how many missing doi
-sum(is.na(df$DOI)) # 792
+sum(is.na(df$DOI)) # 752
 # missing DOI per project
 tapply(is.na(df$DOI), df$Project, sum)
 
 # keep only complete
+
+table(df$Year, useNA = "ifany")
 system.time({
   complete <- title2doi(df, limit = 20, th_year = 2)
 })
-# takes 25 min with 491 missing DOI, limit = 20, with 92% completion rate
+# takes 15 min with 752 missing DOI, limit = 20, with 92% completion rate
 prop.table(table(is.na(complete$DOI)))
 
 write.csv(

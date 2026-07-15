@@ -15,7 +15,7 @@ title2doi <- function(
   for (i in 1:nrow(df)) {
     outi <- data.frame(
       "Title" = df$Title[i],
-      "Year" = df$Title[i],
+      "Year" = df$Year[i],
       "DOI" = df$DOI[i],
       "score" = NA,
       "title_dist" = NA,
@@ -126,18 +126,18 @@ title2doi_crossref <- function(
         # keep if good year, high score or very low distance
         year_crit <- abs(y - yi) <= th_year
         if (year_crit & score_crit) {
-          out$DOI = cri$data$doi[w]
-          out$score = cri$data$score[w]
-          out$title_dist = title_dist[w]
-          out$new_title = cri$data$title[w]
+          out$DOI <- cri$data$doi[w]
+          out$score <- cri$data$score[w]
+          out$title_dist <- title_dist[w]
+          out$new_title <- cri$data$title[w]
         }
       }
     } else {
       if (score_crit) {
-        out$DOI = cri$data$doi[w]
-        out$score = cri$data$score[w]
-        out$title_dist = title_dist[w]
-        out$new_title = cri$data$title[w]
+        out$DOI <- cri$data$doi[w]
+        out$score <- cri$data$score[w]
+        out$title_dist <- title_dist[w]
+        out$new_title <- cri$data$title[w]
       }
     }
   }
@@ -208,9 +208,9 @@ title2doi_pubmed <- function(
         if (year_crit & score_crit) {
           tempi <- sumi[[w]]$articleids
           if ("doi" %in% tempi$idtype) {
-            out$DOI = tempi[which(tempi$idtype == "doi"), "value"]
-            out$title_dist = title_dist[w]
-            out$new_title = sumi[[w]]$title
+            out$DOI <- tempi[which(tempi$idtype == "doi"), "value"]
+            out$title_dist <- title_dist[w]
+            out$new_title <- sumi[[w]]$title
           }
         }
       }
@@ -218,9 +218,9 @@ title2doi_pubmed <- function(
       if (score_crit) {
         tempi <- sumi[[w]]$articleids
         if ("doi" %in% tempi$idtype) {
-          out$DOI = tempi[which(tempi$idtype == "doi"), "value"]
-          out$title_dist = title_dist[w]
-          out$new_title = sumi[[w]]$title
+          out$DOI <- tempi[which(tempi$idtype == "doi"), "value"]
+          out$title_dist <- title_dist[w]
+          out$new_title <- sumi[[w]]$title
         }
       }
     }
@@ -284,16 +284,16 @@ title2doi_hal <- function(
         # keep if good year, high score or very low distance
         year_crit <- abs(y - yi) <= th_year
         if (year_crit & score_crit & !is.null(hi$response$docs[[w]]$doiId_s)) {
-          out$DOI = hi$response$docs[[w]]$doiId_s
-          out$title_dist = title_dist[w]
-          out$new_title = hi$response$docs[[w]]$title_s[[1]]
+          out$DOI <- hi$response$docs[[w]]$doiId_s
+          out$title_dist <- title_dist[w]
+          out$new_title <- hi$response$docs[[w]]$title_s[[1]]
         }
       }
     } else {
       if (score_crit & !is.null(hi$response$docs[[w]]$doiId_s)) {
-        out$DOI = hi$response$docs[[w]]$doiId_s
-        out$title_dist = title_dist[w]
-        out$new_title = hi$response$docs[[w]]$title_s[[1]]
+        out$DOI <- hi$response$docs[[w]]$doiId_s
+        out$title_dist <- title_dist[w]
+        out$new_title <- hi$response$docs[[w]]$title_s[[1]]
       }
     }
   }
