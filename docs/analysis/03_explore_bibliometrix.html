@@ -176,12 +176,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 <p>The objective is to explore the functionalities of the <a href="https://github.com/massimoaria/bibliometrix">bibliometrix R package</a>.</p>
-<p>The example case study is based on the references cited by projects financed under the <a href="https://www.fondationbiodiversite.fr/la-frb-en-action/programmes-et-projets/impacts-sur-la-biodiversite-terrestre-dans-lanthropocene/">FRB-MTE-OFB projects</a>. The references were cleaned and completed in the scripts <a href="https://codeberg.org/frbcesab/Biblioscape/src/branch/main/analysis/01_clean_references.R">01_clean_references.R</a> and <a href="https://codeberg.org/frbcesab/Biblioscape/src/branch/main/analysis/02_fetch_openalex.R">02_fetch_openalex.R</a>.</p>
+<p>The example case study is based on the references cited by projects financed under the <a href="https://www.fondationbiodiversite.fr/la-frb-en-action/programmes-et-projets/impacts-sur-la-biodiversite-terrestre-dans-lanthropocene/">FRB-MTE-OFB projects</a>. The references were cleaned and completed in the scripts <a href="https://github.com/FRBCesab/biblioscape/blob/main/analysis/01_clean_references.R">01_clean_references.R</a> and <a href="https://github.com/FRBCesab/biblioscape/blob/main/analysis/02_fetch_openalex.R">02_fetch_openalex.R</a>.</p>
 <p>The bibliometrix package has a nice <a href="https://www.bibliometrix.org/biblioshiny/">Shiny interface</a> that can be accessed locally with:</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>bibliometrix<span class="sc">::</span><span class="fu">biblioshiny</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>The <a href="https://codeberg.org/frbcesab/Biblioscape/src/branch/main/data/derived-data/mte_references_oa.rdata">openalex data</a> in can be loaded in the Shinyapp in the section Data &gt; Import raw files &gt; OpenAlexAPI.</p>
+<p>The <a href="https://github.com/FRBCesab/biblioscape/raw/refs/heads/main/data/derived-data/mte_references_oa.rdata">openalex data</a> in can be loaded in the Shinyapp in the section Data &gt; Import raw files &gt; OpenAlexAPI.</p>
 <p>But here the objective is to use and explore the functions of <a href="https://github.com/massimoaria/bibliometrix"><code>bibliometrix</code> package</a>.</p>
 <section id="data-loading-and-converting" class="level2">
 <h2 class="anchored" data-anchor-id="data-loading-and-converting">Data loading and converting</h2>

@@ -1,0 +1,88 @@
+---
+title: "Exploration of group memberships"
+author: Romain Frelat
+date: today
+format: 
+  html:
+    toc: true
+execute:
+  echo: true
+  warning: false
+---
+
+
+The objective is to explore the relation among members of the [FRB-MTE-OFB projects](https://www.fondationbiodiversite.fr/la-frb-en-action/programmes-et-projets/impacts-sur-la-biodiversite-terrestre-dans-lanthropocene/). The raw data is not available on Github for privacy issue.
+
+### Group membership
+
+```{r}
+devtools::load_all()
+library(igraph)
+library(visNetwork)
+out_data <- here::here("data", "derived-data")
+# load reference list
+mem <- read.csv(file.path(out_data, "mte_members.csv"))
+
+table(mem$group, mem$function_in_group)
+nrow(mem) # 244 membership
+```
+
+
+### Group network
+
+Based on shared members
+```{r}
+#
+# dup <- duplicated(mem[, c("lastname", "firstname")])
+# sum(duplicated(mem[, c("lastname", "firstname")])) # 21 ==
+# sum(duplicated(mem$emails[!is.na(mem$emails)])) # 21
+
+mem$name <- paste(mem$lastname, mem$firstname)
+group_mem <- table(mem$group, mem$name)
+member_overlap <- as.matrix(
+  proxy::simil(group_mem, method = "russel", diag = TRUE, upper = TRUE) *
+    ncol(group_mem)
+)
+diag(member_overlap) <- 0
+
+netMEM <- igraph::graph_from_adjacency_matrix(
+  member_overlap,
+  mode = "undirected",
+  weighted = TRUE
+)
+
+# plot(
+#   netMEM,
+#   layout = layout_with_mds(netMEM),
+#   rescale = FALSE,
+#   edge.width = E(netMEM)$weight
+# )
+visNetwork::visIgraph(netMEM)
+```
+
+
+### Member network
+
+Based on group membership
+
+```{r}
+pw <- c()
+
+for (i in sort(unique(mem$group))) {
+  ni <- mem$name[mem$group == i]
+  pwi <- expand.grid(ni, ni)
+  #remove identity / loop
+  pwi <- pwi[pwi$Var1 != pwi$Var2, ]
+  pw <- rbind(pw, pwi)
+}
+
+netRES <- igraph::graph_from_data_frame(pw, directed = FALSE)
+
+# plot(
+#   netRES,
+#   layout = layout_with_mds(netRES),
+#   vertex.label = NA
+# )
+
+visNetwork::visIgraph(netRES)
+```

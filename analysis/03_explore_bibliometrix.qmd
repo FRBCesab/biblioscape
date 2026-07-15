@@ -13,7 +13,7 @@ execute:
 
 The objective is to explore the functionalities of the [bibliometrix R package](https://github.com/massimoaria/bibliometrix).   
 
-The example case study is based on the references cited by projects financed under the [FRB-MTE-OFB projects](https://www.fondationbiodiversite.fr/la-frb-en-action/programmes-et-projets/impacts-sur-la-biodiversite-terrestre-dans-lanthropocene/). The references were cleaned and completed in the scripts [01_clean_references.R](https://codeberg.org/frbcesab/Biblioscape/src/branch/main/analysis/01_clean_references.R) and [02_fetch_openalex.R](https://codeberg.org/frbcesab/Biblioscape/src/branch/main/analysis/02_fetch_openalex.R).  
+The example case study is based on the references cited by projects financed under the [FRB-MTE-OFB projects](https://www.fondationbiodiversite.fr/la-frb-en-action/programmes-et-projets/impacts-sur-la-biodiversite-terrestre-dans-lanthropocene/). The references were cleaned and completed in the scripts [01_clean_references.R](https://github.com/FRBCesab/biblioscape/blob/main/analysis/01_clean_references.R) and [02_fetch_openalex.R](https://github.com/FRBCesab/biblioscape/blob/main/analysis/02_fetch_openalex.R).  
 
 The bibliometrix package has a nice [Shiny interface](https://www.bibliometrix.org/biblioshiny/) that can be accessed locally with:
 ```{r}
@@ -21,7 +21,7 @@ The bibliometrix package has a nice [Shiny interface](https://www.bibliometrix.o
 bibliometrix::biblioshiny()
 ```
 
-The [openalex data](https://codeberg.org/frbcesab/Biblioscape/src/branch/main/data/derived-data/mte_references_oa.rdata) in can be loaded in the Shinyapp in the section Data > Import raw files > OpenAlexAPI.   
+The [openalex data](https://github.com/FRBCesab/biblioscape/raw/refs/heads/main/data/derived-data/mte_references_oa.rdata) in can be loaded in the Shinyapp in the section Data > Import raw files > OpenAlexAPI.   
 
 But here the objective is to use and explore the functions of [`bibliometrix` package](https://github.com/massimoaria/bibliometrix).
 

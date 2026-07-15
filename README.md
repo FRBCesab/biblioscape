@@ -22,6 +22,18 @@ source("analysis/02_fetch_openalex.R")
 quarto::quarto_render("analysis/03_explore_bibliometrix.qmd")
 ```
 
+- explore MTE membership dataset
+```r
+quarto::quarto_render("analysis/04_explore_mte_members.qmd")
+```
+
+
+
+
+- render the Readme
+```r
+quarto::quarto_render("index.qmd")
+```
 ## References:   
 
 - Aria, M., Le, T., Cuccurullo, C., Belfiore, A., & Choe, J. (2024). openalexR: An R-Tool for Collecting Bibliometric Data from OpenAlex. R J., 15(4), 167-180.  

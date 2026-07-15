@@ -3,3 +3,6 @@ analysis/dev*
 /.quarto/
 **/*.quarto_ipynb
 _freeze/
+
+*.xlsx
+data/derived-data/mte_members.csv
