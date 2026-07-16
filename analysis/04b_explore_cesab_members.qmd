@@ -1,0 +1,199 @@
+---
+title: "Exploration of CESAB groups membership"
+author: Romain Frelat
+date: today
+format: 
+  html:
+    code-fold: false
+    toc: true
+execute:
+  echo: true
+  warning: false
+---
+
+
+The objective is to explore the relation among members of the [FRB CESAB](https://www.fondationbiodiversite.fr/en/about-the-foundation/le-cesab/). The raw data is not available on Github for privacy issue.
+
+### Group membership
+
+```{r}
+#| label: data-preprocessing
+#| echo: false
+#| eval: false
+in_data <- here::here("data", "raw-data", "cesab")
+# load reference list
+cesab <- readxl::read_xlsx(file.path(in_data, "CESAB_Members.xlsx"))
+# remove workshop participation
+cesab <- cesab[, 1:15]
+
+# simplify affiliation
+# table(cesab$affiliation)
+# university
+# table(cesab$affiliation[grepl("univ", tolower(cesab$affiliation))])
+cesab$affiliation[grepl("univ", tolower(cesab$affiliation))] <- "University"
+cesab$affiliation[cesab$affiliation == "UM"] <- "University"
+
+# Membres fondateurs
+mf <- c("CIRAD", "CNRS", "FRB", "IFREMER", "INRAE", "IRD", "MNHN", "OFB")
+in_mf <- toupper(cesab$affiliation) %in% mf
+cesab$affiliation[in_mf] <- toupper(cesab$affiliation[in_mf])
+
+# Other
+cesab$affiliation[!cesab$affiliation %in% c("University", mf)] <- "Other"
+
+# should I keep only actual members
+table(cesab$still_member)
+
+# should I remove guest ?
+#fmt: skip
+cesab$function_in_group[cesab$function_in_group%in%c("Guesi", "guest")] <- "Guest"
+#fmt: skip
+cesab$function_in_group[cesab$function_in_group%in%c("Membre")] <- "Member"
+#fmt: skip
+cesab$function_in_group[cesab$function_in_group%in%c("Post-doc")] <- "Post-Doc"
+table(cesab$function_in_group)
+
+# check names and duplicates
+cesab$name <- paste(cesab$lastname, cesab$firstname)
+
+dupname <- duplicated(cesab$name)
+dupemail <- duplicated(cesab$emails) & !is.na(cesab$emails)
+# table(dupname, dupemail)
+# changes of emails : ok
+# error <- (dupname & !dupemail)
+# ceserr <- cesab[cesab$name %in% cesab$name[error], ]
+# ceserr[order(ceserr$name), ]
+# errors in name spelling : to be corrected
+error <- (dupemail & !dupname)
+ceserr <- cesab[cesab$emails %in% cesab$emails[error], ]
+ceserr[order(ceserr$name), c("emails", "name")]
+cesab$name <- gsub("Guerin Joana", "Guerrin Joana", cesab$name)
+cesab$name <- gsub("Rush Adrien", "Rusch Adrien", cesab$name)
+cesab$name <- gsub("^Shin Yunne$", "Shin Yunne-Jai", cesab$name)
+cesab$name <- gsub("Thackeray Steeve", "Thackeray Stephen", cesab$name)
+cesab$name <- gsub("Guillemot Joannès", "Guillemot Joannes", cesab$name)
+cesab$name <- gsub("Shatz Bertrand", "Schatz Bertrand", cesab$name)
+
+write.csv(
+  cesab,
+  here::here("data", "derived-data", "cesab_members.csv"),
+  row.names = FALSE
+)
+```
+
+
+```{r}
+#| label: setup
+
+devtools::load_all()
+library(igraph)
+library(visNetwork)
+
+# load reference list
+out_data <- here::here("data", "derived-data")
+cesab <- read.csv(file.path(out_data, "cesab_members.csv"))
+
+# remove guest and stagiaire
+cesab <- cesab[!cesab$function_in_group %in% c("Guest", "Stagiaire"), ]
+
+# remove non active members (and keep NA)
+cesab <- cesab[!cesab$still_member %in% 0, ]
+
+table(cesab$group, cesab$function_in_group)
+summary(as.numeric(table(cesab$group)))
+# table(duplicated(cesab))
+nrow(cesab) # 1015 membership
+```
+
+```{r}
+length(unique(cesab$name)) # 885 members
+```
+
+
+### Group network
+
+Based on shared members
+```{r}
+group <- table(cesab$group, cesab$name)
+member_overlap <- as.matrix(
+  proxy::simil(group, method = "russel", diag = TRUE, upper = TRUE) *
+    ncol(group)
+)
+diag(member_overlap) <- 0
+
+netMEM <- igraph::graph_from_adjacency_matrix(
+  member_overlap,
+  mode = "undirected",
+  weighted = TRUE
+)
+# plot(
+#   netMEM,
+#   layout = layout_with_mds(netMEM),
+#   rescale = FALSE,
+#   edge.width = E(netMEM)$weight
+# )
+# visNetwork::visIgraph(netMEM, randomSeed = 18)
+
+vcount(netMEM) # 74 nodes
+ecount(netMEM) # 125 edges
+
+# very low connectance: 0.04
+edge_density(netMEM, loops = FALSE)
+
+# as a matrix
+# netmatrix <- as_adjacency_matrix(netMEM, sparse = F)
+# heatmap(netmatrix, scale = "none")
+
+modMEM <- cluster_walktrap(netMEM)
+modularity(modMEM) #0.46
+
+modcol <- rainbow(max(membership(modMEM)))[membership(modMEM)]
+V(netMEM)$color <- modcol
+E(netMEM)$width <- E(netMEM)$weight
+visNetwork::visIgraph(netMEM, randomSeed = 54)
+```
+
+*It would be good to add timeline in x axis*  
+*Maybe color per type of project*
+
+
+
+### Member network
+
+Based on group membership
+
+```{r}
+pw <- c()
+
+for (i in sort(unique(cesab$group))) {
+  ni <- cesab$name[cesab$group == i]
+  pwi <- expand.grid(ni, ni)
+  #remove identity / loop
+  pwi <- pwi[pwi$Var1 != pwi$Var2, ]
+  pw <- rbind(pw, pwi)
+}
+
+netRES <- igraph::graph_from_data_frame(pw, directed = FALSE)
+
+# plot(
+#   netRES,
+#   layout = layout_with_mds(netRES),
+#   vertex.label = NA
+# )
+
+vcount(netRES) # 885 nodes : members
+ecount(netRES) # 14766 connections
+
+# low connectance: 0.03
+edge_density(netRES, loops = FALSE)
+
+# netmatrix <- as_adjacency_matrix(netRES, sparse = FALSE)
+# heatmap(netmatrix, scale = "none")
+
+wtc <- cluster_walktrap(netRES)
+modularity(wtc) #0.84
+
+modcol <- rainbow(max(membership(wtc)))[membership(wtc)]
+V(netRES)$color <- modcol
+visNetwork::visIgraph(netRES)
+```

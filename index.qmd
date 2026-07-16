@@ -3,4 +3,9 @@
 Exploration with MTE dataset
 
 1. [Exploration of bibliometrix output](https://frbcesab.github.io/biblioscape/analysis/03_explore_bibliometrix.html)  
-2. [Exploration of group member network](https://frbcesab.github.io/biblioscape/analysis/04_explore_mte_members.html)
+2. [Exploration of group member network](https://frbcesab.github.io/biblioscape/analysis/04a_explore_mte_members.html)
+
+
+
+Exploration with CESAB dataset
+2. [Exploration of group member network](https://frbcesab.github.io/biblioscape/analysis/04b_explore_cesab_members.html)

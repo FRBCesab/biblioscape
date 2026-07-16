@@ -20,8 +20,9 @@ The objective is to explore the relation among members of the [FRB-MTE-OFB proje
 devtools::load_all()
 library(igraph)
 library(visNetwork)
-out_data <- here::here("data", "derived-data")
+
 # load reference list
+out_data <- here::here("data", "derived-data")
 mem <- read.csv(file.path(out_data, "mte_members.csv"))
 
 table(mem$group, mem$function_in_group)
