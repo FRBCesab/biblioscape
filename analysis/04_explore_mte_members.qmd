@@ -4,6 +4,7 @@ author: Romain Frelat
 date: today
 format: 
   html:
+    code-fold: false
     toc: true
 execute:
   echo: true
@@ -24,7 +25,17 @@ out_data <- here::here("data", "derived-data")
 mem <- read.csv(file.path(out_data, "mte_members.csv"))
 
 table(mem$group, mem$function_in_group)
+summary(as.numeric(table(mem$group)))
 nrow(mem) # 244 membership
+```
+
+```{r}
+# dup <- duplicated(mem[, c("lastname", "firstname")])
+# sum(duplicated(mem[, c("lastname", "firstname")])) # 21 ==
+# sum(duplicated(mem$emails[!is.na(mem$emails)])) # 21
+
+mem$name <- paste(mem$lastname, mem$firstname)
+length(unique(mem$name)) # 223 members
 ```
 
 
@@ -32,12 +43,6 @@ nrow(mem) # 244 membership
 
 Based on shared members
 ```{r}
-#
-# dup <- duplicated(mem[, c("lastname", "firstname")])
-# sum(duplicated(mem[, c("lastname", "firstname")])) # 21 ==
-# sum(duplicated(mem$emails[!is.na(mem$emails)])) # 21
-
-mem$name <- paste(mem$lastname, mem$firstname)
 group_mem <- table(mem$group, mem$name)
 member_overlap <- as.matrix(
   proxy::simil(group_mem, method = "russel", diag = TRUE, upper = TRUE) *
@@ -50,14 +55,30 @@ netMEM <- igraph::graph_from_adjacency_matrix(
   mode = "undirected",
   weighted = TRUE
 )
-
 # plot(
 #   netMEM,
 #   layout = layout_with_mds(netMEM),
 #   rescale = FALSE,
 #   edge.width = E(netMEM)$weight
 # )
-visNetwork::visIgraph(netMEM)
+# visNetwork::visIgraph(netMEM, randomSeed = 18)
+
+vcount(netMEM) # 24 nodes
+ecount(netMEM) # 19 edges
+
+# very low connectance: 0.06
+edge_density(netMEM, loops = FALSE)
+
+# as a matrix
+# netmatrix <- as_adjacency_matrix(netMEM, sparse = F)
+# heatmap(netmatrix, scale = "none")
+
+modMEM <- cluster_walktrap(netMEM)
+modularity(modMEM)
+
+modcol <- rainbow(max(membership(modMEM)))[membership(modMEM)]
+V(netMEM)$color <- modcol
+visNetwork::visIgraph(netMEM, randomSeed = 54)
 ```
 
 
@@ -84,5 +105,19 @@ netRES <- igraph::graph_from_data_frame(pw, directed = FALSE)
 #   vertex.label = NA
 # )
 
+vcount(netRES) # 223 nodes : members
+ecount(netRES) # 2406 connections
+
+# low connectance: 0.09
+edge_density(netRES, loops = FALSE)
+
+# netmatrix <- as_adjacency_matrix(netRES, sparse = FALSE)
+# heatmap(netmatrix, scale = "none")
+
+wtc <- cluster_walktrap(netRES)
+modularity(wtc)
+
+modcol <- rainbow(max(membership(wtc)))[membership(wtc)]
+V(netRES)$color <- modcol
 visNetwork::visIgraph(netRES)
 ```
