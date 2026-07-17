@@ -25,8 +25,17 @@ library(visNetwork)
 out_data <- here::here("data", "derived-data")
 mem <- read.csv(file.path(out_data, "mte_members.csv"))
 
+meta <- readxl::read_xlsx(
+  here::here("data", "raw-data", "mte", "Projets_FRB-MTECT-OFB.xlsx")
+)
+# all(meta$Acronyme %in% mem$group)
+
 table(mem$group, mem$function_in_group)
-summary(as.numeric(table(mem$group)))
+
+n_mem <- data.frame(table(mem$group))
+n_mem$Type <- meta$Type[match(n_mem$Var1, meta$Acronyme)]
+tapply(n_mem$Freq, n_mem$Type, summary)
+
 nrow(mem) # 244 membership
 ```
 
@@ -56,6 +65,7 @@ netMEM <- igraph::graph_from_adjacency_matrix(
   mode = "undirected",
   weighted = TRUE
 )
+
 # plot(
 #   netMEM,
 #   layout = layout_with_mds(netMEM),
@@ -63,7 +73,9 @@ netMEM <- igraph::graph_from_adjacency_matrix(
 #   edge.width = E(netMEM)$weight
 # )
 # visNetwork::visIgraph(netMEM, randomSeed = 18)
+```
 
+```{r}
 vcount(netMEM) # 24 nodes
 ecount(netMEM) # 19 edges
 
@@ -76,11 +88,49 @@ edge_density(netMEM, loops = FALSE)
 
 modMEM <- cluster_walktrap(netMEM)
 modularity(modMEM)
+```
 
+::: {.panel-tabset}
+## modules
+```{r}
 modcol <- rainbow(max(membership(modMEM)))[membership(modMEM)]
 V(netMEM)$color <- modcol
 visNetwork::visIgraph(netMEM, randomSeed = 54)
+
+# add a visualisation with year+jitter in x-axis
+# mds in y axis based on distance network and year
 ```
+
+## temporal
+```{r}
+# color by typexnod
+vtyp <- as.factor(meta$Type[match(V(netMEM)$name, meta$Acronyme)])
+typcol <- rainbow(nlevels(vtyp))[vtyp]
+V(netMEM)$color <- typcol
+
+# x-axis by year
+vyr <- meta$Year[match(V(netMEM)$name, meta$Acronyme)]
+xnod <- (vyr - min(vyr)) / (max(vyr) - min(vyr)) * 2 - 1
+
+# take the first MDS dimension
+ynod <- layout_with_mds(netMEM)[, 1]
+
+# coordinates
+coo <- cbind(jitter(xnod), ynod)
+
+# plot(netMEM, layout = coo)
+# laby <- sort(unique(vyr))
+# seqy <- (laby - min(laby)) / (max(laby) - min(laby)) * 2 - 1
+# axis(1, at = seqy, labels = laby)
+visNetwork::visIgraph(
+  netMEM,
+  layout = 'layout.norm',
+  layoutMatrix = coo,
+  randomSeed = 54
+)
+```
+
+:::
 
 
 ### Member network
@@ -89,22 +139,41 @@ Based on group membership
 
 ```{r}
 pw <- c()
-
+pw_pi <- c()
 for (i in sort(unique(mem$group))) {
   ni <- mem$name[mem$group == i]
   pwi <- expand.grid(ni, ni)
   #remove identity / loop
   pwi <- pwi[pwi$Var1 != pwi$Var2, ]
   pw <- rbind(pw, pwi)
+
+  # considering the central role of PI
+  pi <- mem$name[
+    mem$function_in_group %in% c("PI", "Post-doc") & mem$group == i
+  ]
+  pwi2 <- expand.grid(ni, pi)
+  pwi2 <- pwi2[as.character(pwi2$Var1) != as.character(pwi2$Var2), ]
+  pw_pi <- rbind(pw_pi, pwi2)
 }
 
 netRES <- igraph::graph_from_data_frame(pw, directed = FALSE)
-
 # plot(
 #   netRES,
 #   layout = layout_with_mds(netRES),
 #   vertex.label = NA
 # )
+
+netRES_PI <- igraph::graph_from_data_frame(pw_pi, directed = FALSE)
+# plot(
+#   netRES_PI,
+#   layout = layout_with_mds(netRES_PI),
+#   vertex.label = NA
+# )
+```
+
+::: {.panel-tabset}
+## all members
+```{r}
 
 vcount(netRES) # 223 nodes : members
 ecount(netRES) # 2406 connections
@@ -122,3 +191,22 @@ modcol <- rainbow(max(membership(wtc)))[membership(wtc)]
 V(netRES)$color <- modcol
 visNetwork::visIgraph(netRES)
 ```
+
+## PI connected
+```{r}
+
+vcount(netRES_PI) # 223 nodes : members
+ecount(netRES_PI) # 559 connections
+
+# low connectance: 0.02
+edge_density(netRES_PI, loops = FALSE)
+
+wtc <- cluster_walktrap(netRES_PI)
+modularity(wtc) #0.88
+
+modcol <- rainbow(max(membership(wtc)))[membership(wtc)]
+V(netRES_PI)$color <- modcol
+visNetwork::visIgraph(netRES_PI)
+```
+
+:::
