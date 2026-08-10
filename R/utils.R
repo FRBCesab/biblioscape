@@ -28,3 +28,9 @@ cleantitle <- function(x) {
   x <- gsub(" $", "", x)
   return(x)
 }
+
+firstup <- function(x) {
+  x <- tolower(x)
+  substr(x, 1, 1) <- toupper(substr(x, 1, 1))
+  return(x)
+}

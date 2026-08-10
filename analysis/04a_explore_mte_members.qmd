@@ -4,7 +4,7 @@ author: Romain Frelat
 date: today
 format: 
   html:
-    code-fold: false
+    code-fold: true
     toc: true
 execute:
   echo: true
@@ -12,52 +12,57 @@ execute:
 ---
 
 
-The objective is to explore the relation among members of the [FRB-MTE-OFB projects](https://www.fondationbiodiversite.fr/la-frb-en-action/programmes-et-projets/impacts-sur-la-biodiversite-terrestre-dans-lanthropocene/). The raw data is not available on Github for privacy issue.
+The objective is to explore the relation among members of [FRB-MTE-OFB projects](https://www.fondationbiodiversite.fr/la-frb-en-action/programmes-et-projets/impacts-sur-la-biodiversite-terrestre-dans-lanthropocene/). The raw data is not available on Github to safeguard privacy.
 
-### Group membership
+
+## General overview
 
 ```{r}
 devtools::load_all()
 library(igraph)
 library(visNetwork)
 
-# load reference list
-out_data <- here::here("data", "derived-data")
-mem <- read.csv(file.path(out_data, "mte_members.csv"))
+# load membership list
+mem <- read.csv(
+  here::here("data", "derived-data", "mte_members.csv")
+)
 
+# load informations on projects
 meta <- readxl::read_xlsx(
   here::here("data", "raw-data", "mte", "Projets_FRB-MTECT-OFB.xlsx")
 )
-# all(meta$Acronyme %in% mem$group)
 
+# create a last+first name column
+mem$name <- paste(mem$lastname, mem$firstname)
+
+# number of members per group and position
 table(mem$group, mem$function_in_group)
 
+# number of members per type of group
 n_mem <- data.frame(table(mem$group))
 n_mem$Type <- meta$Type[match(n_mem$Var1, meta$Acronyme)]
 tapply(n_mem$Freq, n_mem$Type, summary)
 
-nrow(mem) # 244 membership
+# list all group per name
+infoV <- tapply(mem$group, mem$name, paste, collapse = "<br>")
+
+nproj <- table(table(mem$name))
 ```
 
-```{r}
-# dup <- duplicated(mem[, c("lastname", "firstname")])
-# sum(duplicated(mem[, c("lastname", "firstname")])) # 21 ==
-# sum(duplicated(mem$emails[!is.na(mem$emails)])) # 21
-
-mem$name <- paste(mem$lastname, mem$firstname)
-length(unique(mem$name)) # 223 members
-```
+Among the ```r nrow(meta)``` projects of the programs, there are ```r length(unique(mem$name))``` different researchers. Most of the researcher are member of a single project (N=```r nproj["1"]```), but ```r nproj["2"]``` researchers are attached to 2 projects; and ```r nproj["3"]``` researchers works on 3 projects.  
 
 
-### Group network
 
-Based on shared members
+## Project network
+
+Based on the number of shared members, we can build a network of projects.
+
 ```{r}
 group_mem <- table(mem$group, mem$name)
-member_overlap <- as.matrix(
-  proxy::simil(group_mem, method = "russel", diag = TRUE, upper = TRUE) *
-    ncol(group_mem)
-)
+member_overlap <- tcrossprod(group_mem)
+# or Jaccard to account for different group size
+# proxy::simil(group_mem, method = "Jaccard", diag = TRUE, upper = TRUE)
+
 diag(member_overlap) <- 0
 
 netMEM <- igraph::graph_from_adjacency_matrix(
@@ -66,83 +71,94 @@ netMEM <- igraph::graph_from_adjacency_matrix(
   weighted = TRUE
 )
 
-# plot(
-#   netMEM,
-#   layout = layout_with_mds(netMEM),
-#   rescale = FALSE,
-#   edge.width = E(netMEM)$weight
-# )
-# visNetwork::visIgraph(netMEM, randomSeed = 18)
-```
-
-```{r}
-vcount(netMEM) # 24 nodes
-ecount(netMEM) # 19 edges
-
-# very low connectance: 0.06
-edge_density(netMEM, loops = FALSE)
-
-# as a matrix
-# netmatrix <- as_adjacency_matrix(netMEM, sparse = F)
-# heatmap(netmatrix, scale = "none")
-
 modMEM <- cluster_walktrap(netMEM)
-modularity(modMEM)
 ```
 
-::: {.panel-tabset}
-## modules
+The network has ```r vcount(netMEM)``` nodes, ```r ecount(netMEM)``` edges, a connectance of ```r round(edge_density(netMEM, loops = FALSE),2)``` and a modularity of ```r round(modularity(modMEM),2)```
+
+
+### Project network with modules
 ```{r}
 modcol <- rainbow(max(membership(modMEM)))[membership(modMEM)]
-V(netMEM)$color <- modcol
-visNetwork::visIgraph(netMEM, randomSeed = 54)
+vtyp <- as.factor(meta$Type[match(V(netMEM)$name, meta$Acronyme)])
+vyr <- meta$Year[match(V(netMEM)$name, meta$Acronyme)]
 
-# add a visualisation with year+jitter in x-axis
-# mds in y axis based on distance network and year
+V(netMEM)$color <- modcol
+E(netMEM)$width <- E(netMEM)$weight
+V(netMEM)$title <- paste(V(netMEM)$name, vtyp, vyr, sep = "<br>")
+visNetwork::visIgraph(netMEM, randomSeed = 54, layout = "layout_nicely")
+# layout_nicely, layout_with_fr, layout_with_kk
 ```
 
-## temporal
+### Project network with year and type
+
 ```{r}
 # color by typexnod
-vtyp <- as.factor(meta$Type[match(V(netMEM)$name, meta$Acronyme)])
 typcol <- rainbow(nlevels(vtyp))[vtyp]
 V(netMEM)$color <- typcol
 
 # x-axis by year
-vyr <- meta$Year[match(V(netMEM)$name, meta$Acronyme)]
 xnod <- (vyr - min(vyr)) / (max(vyr) - min(vyr)) * 2 - 1
 
-# take the first MDS dimension
-ynod <- layout_with_mds(netMEM)[, 1]
+# take the membership as y-axis
+ymod <- ifelse(membership(modMEM) > 5, 6, membership(modMEM))
+ynod <- ymod / max(ymod)
+# layout_nicely(netMEM)[, 2]
+# sqrt(membership(modMEM)) / max(sqrt(membership(modMEM)))
+# or take the first MDS dimension
+# ynod <- layout_with_mds(netMEM)[, 1]
 
 # coordinates
-coo <- cbind(jitter(xnod), ynod)
+coo <- cbind(jitter(xnod, 1.5), jitter(ynod, 3))
 
 # plot(netMEM, layout = coo)
-# laby <- sort(unique(vyr))
-# seqy <- (laby - min(laby)) / (max(laby) - min(laby)) * 2 - 1
-# axis(1, at = seqy, labels = laby)
+laby <- sort(unique(vyr))
+seqy <- (laby - min(laby)) / (max(laby) - min(laby)) * 2 - 1
+
 visNetwork::visIgraph(
   netMEM,
   layout = 'layout.norm',
   layoutMatrix = coo,
-  randomSeed = 54
+  randomSeed = 54,
+  type = "full"
 )
 ```
 
-:::
+### Centrality
+
+There are a lot of different measures of centrality; here we use betweenness (number of shortest paths going through a vertex) and the Google page rank
+```{r}
+betweenMEM <- betweenness(netMEM)
+degreeMEM <- degree(netMEM)
+prMEM <- page_rank(netMEM)$vector
+par(mar = c(4, 4, 3, 1))
+plot(
+  betweenMEM,
+  prMEM,
+  xlab = "Betweenness",
+  ylab = "Page rank",
+  main = "Project centrality",
+  type <- "n"
+)
+
+text(betweenMEM, prMEM, V(netMEM)$name, xpd = NA)
+```
 
 
-### Member network
+## Researcher network
 
-Based on group membership
+Based on project membership, we can build two member networks:
+
+a. where all group members are linked among them
+b. where group members are linked only to the PI+postdoc
 
 ```{r}
 pw <- c()
 pw_pi <- c()
 for (i in sort(unique(mem$group))) {
   ni <- mem$name[mem$group == i]
-  pwi <- expand.grid(ni, ni)
+  pwi <- expand.grid(ni, ni) #or combn(ni, 2) for undirected
+  combn(ni, 2)
   #remove identity / loop
   pwi <- pwi[pwi$Var1 != pwi$Var2, ]
   pw <- rbind(pw, pwi)
@@ -156,7 +172,9 @@ for (i in sort(unique(mem$group))) {
   pw_pi <- rbind(pw_pi, pwi2)
 }
 
+# add weight based on how many times
 netRES <- igraph::graph_from_data_frame(pw, directed = FALSE)
+modRES <- cluster_walktrap(netRES)
 # plot(
 #   netRES,
 #   layout = layout_with_mds(netRES),
@@ -164,6 +182,7 @@ netRES <- igraph::graph_from_data_frame(pw, directed = FALSE)
 # )
 
 netRES_PI <- igraph::graph_from_data_frame(pw_pi, directed = FALSE)
+modRES_PI <- cluster_walktrap(netRES_PI)
 # plot(
 #   netRES_PI,
 #   layout = layout_with_mds(netRES_PI),
@@ -171,42 +190,57 @@ netRES_PI <- igraph::graph_from_data_frame(pw_pi, directed = FALSE)
 # )
 ```
 
-::: {.panel-tabset}
-## all members
+
+
+
+### A. all members
+
+The network linking all group members between them has ```r vcount(netRES)``` nodes, ```r ecount(netRES)``` edges, a connectance of ```r round(edge_density(netRES, loops = FALSE),2)``` and a modularity of ```r round(modularity(modRES),2)```. 
+
 ```{r}
+V(netRES)$title <- paste(
+  V(netRES)$name,
+  infoV[match(V(netRES)$name, names(infoV))],
+  sep = "<br>"
+)
 
-vcount(netRES) # 223 nodes : members
-ecount(netRES) # 2406 connections
-
-# low connectance: 0.09
-edge_density(netRES, loops = FALSE)
-
-# netmatrix <- as_adjacency_matrix(netRES, sparse = FALSE)
-# heatmap(netmatrix, scale = "none")
-
-wtc <- cluster_walktrap(netRES)
-modularity(wtc)
-
-modcol <- rainbow(max(membership(wtc)))[membership(wtc)]
+modcol <- rainbow(max(membership(modRES)))[membership(modRES)]
 V(netRES)$color <- modcol
 visNetwork::visIgraph(netRES)
 ```
 
-## PI connected
+### B. PI connected
+
+The network linking all group members to the PI+Postdoc has ```r vcount(netRES_PI)``` nodes, ```r ecount(netRES_PI)``` edges, a connectance of ```r round(edge_density(netRES_PI, loops = FALSE),2)``` and a modularity of ```r round(modularity(modRES_PI),2)```. 
+
 ```{r}
+V(netRES_PI)$title <- paste(
+  V(netRES_PI)$name,
+  infoV[match(V(netRES_PI)$name, names(infoV))],
+  sep = "<br>"
+)
 
-vcount(netRES_PI) # 223 nodes : members
-ecount(netRES_PI) # 559 connections
-
-# low connectance: 0.02
-edge_density(netRES_PI, loops = FALSE)
-
-wtc <- cluster_walktrap(netRES_PI)
-modularity(wtc) #0.88
-
-modcol <- rainbow(max(membership(wtc)))[membership(wtc)]
+modcol <- rainbow(max(membership(modRES_PI)))[membership(modRES_PI)]
 V(netRES_PI)$color <- modcol
 visNetwork::visIgraph(netRES_PI)
 ```
 
-:::
+
+## Bipartite network
+
+
+```{r}
+netBI <- graph_from_data_frame(
+  mem[, c("name", "group")]
+)
+V(netBI)$type <- V(netBI)$name %in% meta$Acronyme
+V(netBI)$color <- ifelse(V(netBI)$type, "blue", "red")
+# V(netBI)$shape <- ifelse(V(netBI)$type, "square", "circle")
+# V(netBI)$size <- 1
+modBI <- cluster_walktrap(netBI)
+
+# plot(netBI, layout = layout_as_bipartite(netBI))
+visNetwork::visIgraph(netBI)
+```
+
+The bipartite network has ```r vcount(netBI)``` nodes, ```r ecount(netBI)``` edges, a connectance of ```r round(edge_density(netBI, loops = FALSE),4)``` and a modularity of ```r round(modularity(modBI),2)```. 

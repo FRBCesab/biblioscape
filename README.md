@@ -27,6 +27,16 @@ quarto::quarto_render("analysis/03_explore_bibliometrix.qmd")
 quarto::quarto_render("analysis/04a_explore_mte_members.qmd")
 ```
 
+- explore co-citation network
+```r
+quarto::quarto_render("analysis/05a_explore_mte_references.qmd")
+```
+<!-- 
+- Article network
+- Author network
+- multi-layer network 
+-->
+
 
 The second case study uses [FRB CESAB projects](https://www.fondationbiodiversite.fr/en/about-the-foundation/le-cesab/):  
 
@@ -54,3 +64,9 @@ quarto::quarto_render("index.qmd")
 - Aria, M. & Cuccurullo, C. (2017) bibliometrix: An R-tool for comprehensive science mapping analysis, Journal of Informetrics, 11(4), 959-975
 
 - Aria, M. & Cuccurullo, C. (2026). Science Mapping Analysis: A Primer with Biblioshiny, McGraw-Hill Education. ISBN: 978-88-386-2297-7.
+
+- Csardi G, Nepusz T (2006). “The igraph software package for complex network research.” InterJournal, Complex Systems, 1695. https://igraph.org.  
+
+## Tutorial on network analysis
+
+- Hugues Pecout H, Beauguitte L, Fernandez M (2023) Analyse de réseau avec igraph, <https://elementr.gitpages.huma-num.fr/session_reseau/intro_reseau_igraph/igraph.html>
