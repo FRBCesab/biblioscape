@@ -1,5 +1,5 @@
 ---
-title: "Exploration of group memberships"
+title: "Exploration of project memberships"
 author: Romain Frelat
 date: today
 format: 
@@ -12,15 +12,24 @@ execute:
 ---
 
 
-The objective is to explore the relation among members of [FRB-MTE-OFB projects](https://www.fondationbiodiversite.fr/la-frb-en-action/programmes-et-projets/impacts-sur-la-biodiversite-terrestre-dans-lanthropocene/). The raw data is not available on Github to safeguard privacy.
+The objective is to explore the relation among members of [FRB-MTE-OFB projects](https://www.fondationbiodiversite.fr/la-frb-en-action/programmes-et-projets/impacts-sur-la-biodiversite-terrestre-dans-lanthropocene/). 
 
+Based on project membership, we:  
+
+- quantify the overlap among projects
+- cluster projects based on shared members 
+- identify members that link multiple projects (*hubs*)
+
+This document is mostly an exploration of network analysis methodology and [interactive visualization](https://datastorm-open.github.io/visNetwork/).  
+
+*The raw data is not available on Github to safeguard privacy.*
 
 ## General overview
 
 ```{r}
-devtools::load_all()
-library(igraph)
-library(visNetwork)
+library(igraph) # network analysis
+library(visNetwork) # interactive network
+library(plotly) # interactive plot
 
 # load membership list
 mem <- read.csv(
@@ -52,7 +61,6 @@ nproj <- table(table(mem$name))
 Among the ```r nrow(meta)``` projects of the programs, there are ```r length(unique(mem$name))``` different researchers. Most of the researcher are member of a single project (N=```r nproj["1"]```), but ```r nproj["2"]``` researchers are attached to 2 projects; and ```r nproj["3"]``` researchers works on 3 projects.  
 
 
-
 ## Project network
 
 Based on the number of shared members, we can build a network of projects.
@@ -71,37 +79,67 @@ netMEM <- igraph::graph_from_adjacency_matrix(
   weighted = TRUE
 )
 
-modMEM <- cluster_walktrap(netMEM)
+# modularity (optimal because the graph is tiny)
+modMEM <- cluster_walktrap(netMEM) # same as cluster_optimal
+
+# set color per group
+cluMEM <- membership(modMEM)
+nclu <- table(cluMEM)
+cclu <- colorspace::qualitative_hcl(n = length(nclu), palette = "Dark 3")
+cclu[nclu == 1] <- "#808080" # grey
+colMEM <- cclu[cluMEM]
+simclu <- ifelse(cluMEM <= (sum(nclu > 1)), cluMEM, "isolated")
 ```
 
-The network has ```r vcount(netMEM)``` nodes, ```r ecount(netMEM)``` edges, a connectance of ```r round(edge_density(netMEM, loops = FALSE),2)``` and a modularity of ```r round(modularity(modMEM),2)```
+The network has ```r vcount(netMEM)``` nodes, ```r ecount(netMEM)``` edges, a connectance of ```r round(edge_density(netMEM, loops = FALSE),3)``` and a modularity of ```r round(modularity(modMEM),2)```
 
 
 ### Project network with modules
 ```{r}
-modcol <- rainbow(max(membership(modMEM)))[membership(modMEM)]
-vtyp <- as.factor(meta$Type[match(V(netMEM)$name, meta$Acronyme)])
-vyr <- meta$Year[match(V(netMEM)$name, meta$Acronyme)]
-
-V(netMEM)$color <- modcol
+V(netMEM)$type <- as.factor(meta$Type[match(V(netMEM)$name, meta$Acronyme)])
+V(netMEM)$year <- meta$Year[match(V(netMEM)$name, meta$Acronyme)]
+V(netMEM)$group <- simclu
+V(netMEM)$color <- colMEM
 E(netMEM)$width <- E(netMEM)$weight
-V(netMEM)$title <- paste(V(netMEM)$name, vtyp, vyr, sep = "<br>")
-visNetwork::visIgraph(netMEM, randomSeed = 54, layout = "layout_nicely")
+V(netMEM)$title <- paste(
+  V(netMEM)$name,
+  V(netMEM)$type,
+  V(netMEM)$year,
+  sep = "<br>"
+)
+visNetwork::visIgraph(netMEM, randomSeed = 54, layout = "layout_nicely") |>
+  visOptions(
+    highlightNearest = TRUE,
+    selectedBy = list(variable = "group", multiple = T)
+  ) |>
+  visPhysics(stabilization = FALSE)
 # layout_nicely, layout_with_fr, layout_with_kk
+```
+
+```{r}
+# identify cliques
+for (i in sort(unique(simclu))) {
+  print(paste(
+    i,
+    paste(V(netMEM)$name[simclu == i], collapse = ", "),
+    sep = ": "
+  ))
+}
 ```
 
 ### Project network with year and type
 
 ```{r}
 # color by typexnod
-typcol <- rainbow(nlevels(vtyp))[vtyp]
-V(netMEM)$color <- typcol
+typshp <- c("triangle", "square", "dot")[V(netMEM)$type]
+V(netMEM)$shape <- typshp
 
 # x-axis by year
+vyr <- V(netMEM)$year
 xnod <- (vyr - min(vyr)) / (max(vyr) - min(vyr)) * 2 - 1
 
 # take the membership as y-axis
-ymod <- ifelse(membership(modMEM) > 5, 6, membership(modMEM))
+ymod <- as.numeric(as.factor(simclu))
 ynod <- ymod / max(ymod)
 # layout_nicely(netMEM)[, 2]
 # sqrt(membership(modMEM)) / max(sqrt(membership(modMEM)))
@@ -121,29 +159,69 @@ visNetwork::visIgraph(
   layoutMatrix = coo,
   randomSeed = 54,
   type = "full"
-)
+) |>
+  visLegend(
+    addNodes = list(
+      list(
+        label = "Revue",
+        shape = "triangle",
+        color = "grey"
+      ),
+      list(
+        label = "Synergie",
+        shape = "square",
+        color = "grey"
+      ),
+      list(
+        label = "Synthese",
+        shape = "dot",
+        color = "grey"
+      )
+    ),
+    useGroups = FALSE
+  ) |>
+  visOptions(
+    highlightNearest = TRUE,
+    selectedBy = list(variable = "type", multiple = T)
+  ) |>
+  visPhysics(stabilization = FALSE)
 ```
 
 ### Centrality
 
-There are a lot of different measures of centrality; here we use betweenness (number of shortest paths going through a vertex) and the Google page rank
+There are a lot of different measures of centrality. Here we use betweenness (number of shortest paths going through a vertex) and the Google page rank.
+
 ```{r}
-betweenMEM <- betweenness(netMEM)
-degreeMEM <- degree(netMEM)
-prMEM <- page_rank(netMEM)$vector
-par(mar = c(4, 4, 3, 1))
-plot(
-  betweenMEM,
-  prMEM,
-  xlab = "Betweenness",
-  ylab = "Page rank",
-  main = "Project centrality",
-  type <- "n"
+centP <- data.frame(
+  "betweenness" = betweenness(netMEM),
+  "pagerank" = page_rank(netMEM)$vector,
+  "degree" = degree(netMEM),
+  "lab" = V(netMEM)$title,
+  "color" = colMEM
 )
 
-text(betweenMEM, prMEM, V(netMEM)$name, xpd = NA)
+plot_ly(centP) |>
+  add_markers(
+    x = ~betweenness,
+    y = ~pagerank,
+    size = ~degree,
+    marker = list(color = ~color, line = list(color = ~color)),
+    text = ~lab,
+    hoverinfo = "text"
+  ) |>
+  layout(title = "Project centrality") |>
+  config(
+    modeBarButtons = list(list("toImage")),
+    displaylogo = FALSE
+  )
 ```
 
+
+```{r}
+info <- apply(centP[, 1:3], 2, round, 3)
+score <- apply(scale(sqrt(info)), 1, mean)
+DT::datatable(info[order(score, decreasing = TRUE), ])
+```
 
 ## Researcher network
 
@@ -195,7 +273,7 @@ modRES_PI <- cluster_walktrap(netRES_PI)
 
 ### A. all members
 
-The network linking all group members between them has ```r vcount(netRES)``` nodes, ```r ecount(netRES)``` edges, a connectance of ```r round(edge_density(netRES, loops = FALSE),2)``` and a modularity of ```r round(modularity(modRES),2)```. 
+The network linking all group members between them has ```r vcount(netRES)``` nodes, ```r ecount(netRES)``` edges, a connectance of ```r round(edge_density(netRES, loops = FALSE),3)``` and a modularity of ```r round(modularity(modRES),2)```. 
 
 ```{r}
 V(netRES)$title <- paste(
@@ -211,7 +289,7 @@ visNetwork::visIgraph(netRES)
 
 ### B. PI connected
 
-The network linking all group members to the PI+Postdoc has ```r vcount(netRES_PI)``` nodes, ```r ecount(netRES_PI)``` edges, a connectance of ```r round(edge_density(netRES_PI, loops = FALSE),2)``` and a modularity of ```r round(modularity(modRES_PI),2)```. 
+The network linking all group members to the PI+Postdoc has ```r vcount(netRES_PI)``` nodes, ```r ecount(netRES_PI)``` edges, a connectance of ```r round(edge_density(netRES_PI, loops = FALSE),3)``` and a modularity of ```r round(modularity(modRES_PI),2)```. 
 
 ```{r}
 V(netRES_PI)$title <- paste(
@@ -225,17 +303,71 @@ V(netRES_PI)$color <- modcol
 visNetwork::visIgraph(netRES_PI)
 ```
 
+### Centrality
+
+We calculate centrality on the network with all members connected.
+
+```{r}
+centR <- data.frame(
+  "betweenness" = betweenness(netRES),
+  "degree" = degree(netRES),
+  "pagerank" = page_rank(netRES)$vector,
+  "lab" = V(netRES)$title
+)
+
+plot_ly(centR) |>
+  add_markers(
+    x = ~betweenness,
+    y = ~pagerank,
+    size = ~degree,
+    text = ~lab,
+    hoverinfo = "text"
+  ) |>
+  layout(title = "Researcher centrality") |>
+  config(
+    modeBarButtons = list(list("toImage")),
+    displaylogo = FALSE
+  )
+```
+
+```{r}
+info <- apply(centR[, -4], 2, round, 3)
+score <- apply(scale(sqrt(info)), 1, mean)
+DT::datatable(info[order(score, decreasing = TRUE)[1:20], ])
+```
 
 ## Bipartite network
-
 
 ```{r}
 netBI <- graph_from_data_frame(
   mem[, c("name", "group")]
 )
 V(netBI)$type <- V(netBI)$name %in% meta$Acronyme
-V(netBI)$color <- ifelse(V(netBI)$type, "blue", "red")
-# V(netBI)$shape <- ifelse(V(netBI)$type, "square", "circle")
+
+
+V(netBI)$color <- ifelse(
+  V(netBI)$type,
+  V(netMEM)$color[match(V(netBI)$name, V(netMEM)$name)],
+  "lightblue"
+)
+V(netBI)$shape <- ifelse(V(netBI)$type, "square", "dot")
+# V(netBI)$size <- ifelse(V(netBI)$type, 3, 1)
+
+extra <- ifelse(
+  V(netBI)$type,
+  paste(
+    meta$Type[match(V(netBI)$name, meta$Acronyme)],
+    meta$Year[match(V(netBI)$name, meta$Acronyme)],
+    sep = "<br>"
+  ),
+  infoV[match(V(netBI)$name, names(infoV))]
+)
+V(netBI)$title <- paste(
+  V(netBI)$name,
+  extra,
+  sep = "<br>"
+)
+
 # V(netBI)$size <- 1
 modBI <- cluster_walktrap(netBI)
 
@@ -243,4 +375,4 @@ modBI <- cluster_walktrap(netBI)
 visNetwork::visIgraph(netBI)
 ```
 
-The bipartite network has ```r vcount(netBI)``` nodes, ```r ecount(netBI)``` edges, a connectance of ```r round(edge_density(netBI, loops = FALSE),4)``` and a modularity of ```r round(modularity(modBI),2)```. 
+The bipartite network has ```r vcount(netBI)``` nodes, ```r ecount(netBI)``` edges, a connectance of ```r round(edge_density(netBI, loops = FALSE),3)``` and a modularity of ```r round(modularity(modBI),2)```. 
