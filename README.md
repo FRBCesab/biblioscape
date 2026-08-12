@@ -27,6 +27,12 @@ quarto::quarto_render("analysis/03_explore_bibliometrix.qmd")
 quarto::quarto_render("analysis/04a_explore_mte_members.qmd")
 ```
 
+- explore MTE citations dataset
+```r
+quarto::quarto_render("analysis/04b_explore_mte_citations.qmd")
+```
+
+
 - explore co-citation network
 ```r
 quarto::quarto_render("analysis/05a_explore_mte_references.qmd")

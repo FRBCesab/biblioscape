@@ -1,0 +1,263 @@
+---
+title: "Exploration of project citations"
+author: Romain Frelat
+date: today
+format: 
+  html:
+    code-fold: true
+    toc: true
+execute:
+  echo: true
+  warning: false
+---
+
+
+The objective is to explore the associations among [FRB-MTE-OFB projects](https://www.fondationbiodiversite.fr/la-frb-en-action/programmes-et-projets/impacts-sur-la-biodiversite-terrestre-dans-lanthropocene/) based on shared references. 
+
+Based on references, we:  
+
+- quantify the overlap among projects  
+- cluster projects based on shared references 
+- identify papers that link multiple projects (*hubs*)
+
+
+This document is mostly an exploration of how network analysis methodology.  
+
+*The raw data is not available on Github to safeguard privacy.*
+
+
+## General overview
+
+```{r}
+devtools::load_all()
+library(igraph) # network analysis
+library(visNetwork) # interactive network
+library(plotly) # interactive plot
+
+# load reference list
+ref <- read.csv(
+  here::here("data", "derived-data", "mte_references_completed.csv")
+)
+ref$Project <- firstup(ref$Project)
+# remove references with no DOI
+ref <- ref[!is.na(ref$DOI), ]
+
+# load informations on projects
+meta <- readxl::read_xlsx(
+  here::here("data", "raw-data", "mte", "Projets_FRB-MTECT-OFB.xlsx")
+)
+
+ndoi <- table(table(ref$DOI))
+
+load(
+  here::here("data", "derived-data", "mte_references_oa_shinycomplete.RData")
+)
+# M <- readRDS(here::here("data", "derived-data", "mte_bibliometrix.rds"))
+# table(ref$DOI %in% M$DI)
+ref$Short <- M$SR[match(ref$DOI, M$DI)]
+ref$FAut <- M$AU_CORR[match(ref$DOI, M$DI)]
+```
+
+```{r}
+# table(ref$Year, ref$Project)
+table(ref$Project, ref$Relation)
+
+# between 11 and 116 references per project
+# summary(as.numeric(table(ref$Project)))
+n_ref <- data.frame(table(ref$Project))
+n_ref$Type <- meta$Type[match(n_ref$Var1, meta$Acronyme)]
+tapply(n_ref$Freq, n_ref$Type, summary)
+```
+
+
+Each project cited between ```r min(n_ref$Freq)``` and ```r max(n_ref$Freq)``` references in their proposal. These references comes from the main text (`Proposal`), the top articles per member (`Top5`) or listed as `Output` in the final report. There are strong differences in the proposal format depending on the project type, `synthese` being the most complete proposal compare to `synergie` and `revue systematique`.  
+
+In total, there are ```r nrow(ref)``` references listed by the ```r nrow(n_ref)``` projects. Most publications are cited by a single project (N=```r ndoi["1"]```), but ```r sum(ndoi[-1])``` publications are cited by at least two projects.
+
+
+## Bipartite network
+
+We can build a bi-partite network with references connecting projects.
+
+```{r}
+netBI <- graph_from_data_frame(
+  ref[, c("DOI", "Project")]
+)
+V(netBI)$type <- V(netBI)$name %in% ref$Project
+# V(netBI)$size <- 1
+modBI <- cluster_walktrap(netBI)
+```
+
+The bipartite network has ```r vcount(netBI)``` nodes, ```r ecount(netBI)``` edges, a connectance of ```r round(edge_density(netBI, loops = FALSE),3)``` and a modularity of ```r round(modularity(modBI),2)```. 
+
+```{r}
+V(netBI)$color <- ifelse(V(netBI)$type, "red", "blue")
+V(netBI)$shape <- ifelse(V(netBI)$type, "square", "dot")
+
+# plot(netBI, layout = layout_as_bipartite(netBI))
+visNetwork::visIgraph(netBI)
+```
+
+
+To analyse the bipartite network, it is best to split it into two networks:
+- a project network to explore the links among projects
+- a reference network to explore the centrality of references
+
+
+```{r}
+splitBI <- bipartite_projection(netBI)
+netREF <- splitBI$proj1
+netPR <- splitBI$proj2
+```
+
+### Project network
+
+Based on the number of shared references, we can build a network of projects.
+
+```{r}
+# group_mem <- table(mem$group, mem$name)
+# member_overlap <- tcrossprod(group_mem)
+# diag(member_overlap) <- 0
+# netMEM <- igraph::graph_from_adjacency_matrix(
+#   member_overlap,
+#   mode = "undirected",
+#   weighted = TRUE
+# )
+modPR <- cluster_walktrap(netPR)
+cluPR <- membership(modPR)
+nclu <- table(cluPR)
+cclu <- colorspace::qualitative_hcl(n = length(nclu), palette = "Dark 3")
+cclu[nclu == 1] <- "#808080" # grey
+colPR <- cclu[cluPR]
+simclu <- ifelse(cluPR <= (sum(nclu > 1)), cluPR, "isolated")
+```
+
+
+
+The network has ```r vcount(netPR)``` nodes (one node = one project) and ```r ecount(netPR)``` edges (one edge = shared reference between two projects). The connectance is ```r round(edge_density(netPR, loops = FALSE),3)``` and the modularity ```r round(modularity(modPR),2)```
+
+
+#### Modules
+```{r}
+V(netPR)$type <- as.factor(meta$Type[match(V(netPR)$name, meta$Acronyme)])
+V(netPR)$shape <- c("triangle", "square", "dot")[V(netPR)$type]
+V(netPR)$year <- meta$Year[match(V(netPR)$name, meta$Acronyme)]
+V(netPR)$group <- simclu
+V(netPR)$color <- colPR
+E(netPR)$width <- E(netPR)$weight
+V(netPR)$title <- paste(
+  V(netPR)$name,
+  V(netPR)$type,
+  V(netPR)$year,
+  sep = "<br>"
+)
+visNetwork::visIgraph(netPR, randomSeed = 54, layout = "layout_nicely") |>
+  visOptions(
+    highlightNearest = TRUE,
+    selectedBy = list(variable = "group", multiple = T)
+  ) |>
+  visLegend(
+    addNodes = list(
+      list(
+        label = "Revue",
+        shape = "triangle",
+        color = "grey"
+      ),
+      list(
+        label = "Synergie",
+        shape = "square",
+        color = "grey"
+      ),
+      list(
+        label = "Synthese",
+        shape = "dot",
+        color = "grey"
+      )
+    ),
+    useGroups = FALSE
+  ) |>
+  visPhysics(stabilization = TRUE)
+# layout_nicely, layout_with_fr, layout_with_kk
+```
+
+```{r}
+# identify cliques
+for (i in sort(unique(simclu))) {
+  print(paste(
+    i,
+    paste(V(netPR)$name[simclu == i], collapse = ", "),
+    sep = ": "
+  ))
+}
+```
+
+
+## Reference network
+
+Based on the reference network, we can identify the centrality of shared references. 
+
+
+```{r}
+# show the weight
+E(netREF)$width <- E(netREF)$weight
+
+V(netREF)$size <- log(degree(netREF))
+
+V(netREF)$label <- ref$Short[match(V(netREF)$name, ref$DOI)]
+V(netREF)$year <- ref$Year[match(V(netREF)$name, ref$DOI)]
+V(netREF)$faut <- ref$FAut[match(V(netREF)$name, ref$DOI)]
+V(netREF)$fulltitle <- ref$Title[match(V(netREF)$name, ref$DOI)]
+V(netREF)$shorttitle <- substr(V(netREF)$fulltitle, 1, 25)
+
+V(netREF)$title <- paste(
+  V(netREF)$name,
+  V(netREF)$year,
+  V(netREF)$faut,
+  V(netREF)$shorttitle,
+  sep = "<br>"
+)
+
+# plot(netREF)
+# visNetwork::visIgraph(netREF, randomSeed = 54, layout = "layout_nicely") |>
+#   visOptions(
+#     highlightNearest = TRUE,
+#   )
+```
+
+#### Centrality
+
+There are a lot of different measures of centrality. Here we use betweenness (number of shortest paths going through a vertex) and the Google page rank.
+
+
+```{r}
+centR <- data.frame(
+  "betweenness" = betweenness(netREF),
+  "degree" = degree(netREF),
+  "pagerank" = page_rank(netREF)$vector,
+  "lab" = V(netREF)$title
+)
+
+plot_ly(centR) |>
+  add_markers(
+    x = ~betweenness,
+    y = ~pagerank,
+    size = ~degree,
+    text = ~lab,
+    hoverinfo = "text"
+  ) |>
+  layout(title = "Researcher centrality") |>
+  config(
+    modeBarButtons = list(list("toImage")),
+    displaylogo = FALSE
+  )
+```
+
+```{r}
+info <- apply(centR[, -4], 2, round, 3)
+score <- apply(scale(sqrt(info)), 1, mean)
+info <- as.data.frame(info)
+info$first_aut <- V(netREF)$faut
+info$year <- V(netREF)$year
+info$short_title <- V(netREF)$shorttitle
+DT::datatable(info[order(score, decreasing = TRUE)[1:50], ])
+```
