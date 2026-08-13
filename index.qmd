@@ -8,6 +8,9 @@ Exploration with MTE dataset
 
 3. [Exploration of citation network](https://frbcesab.github.io/biblioscape/analysis/04b_explore_mte_citations.html)
 
+4. [Exploration of bibliographic coupling](https://frbcesab.github.io/biblioscape/analysis/04c_explore_mte_coupling.html)
 
-Exploration with CESAB dataset
+
+Exploration with CESAB dataset  
+
 10. [Exploration of group member network](https://frbcesab.github.io/biblioscape/analysis/04b_explore_cesab_members.html)

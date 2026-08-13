@@ -1,0 +1,214 @@
+---
+title: "Exploration of co-citation networks"
+author: Romain Frelat
+date: today
+format: 
+  html:
+    code-fold: true
+    toc: true
+execute:
+  echo: true
+  warning: false
+---
+
+
+The objective of this document is to explore the co-citations among the [FRB-MTE-OFB projects](https://www.fondationbiodiversite.fr/la-frb-en-action/programmes-et-projets/impacts-sur-la-biodiversite-terrestre-dans-lanthropocene/). The references were cleaned and completed in the scripts [01_clean_references.R](https://github.com/FRBCesab/biblioscape/blob/main/analysis/01_clean_references.R) and [02_fetch_openalex.R](https://github.com/FRBCesab/biblioscape/blob/main/analysis/02_fetch_openalex.R).   
+
+Estimate the distance among papers cited by projects using co-citations.
+The questions are:
+- how wide/narrow are the research projects?
+- how similar/interconnected are the projects? can we make group of projects based on their citations?
+- which are key work that are cited by many projects?
+
+Nodes are all papers cited by the projects, and cited papers that are cited by at least two papers.
+
+> The Co-Citation Network maps the intellectual structure of a research field by analyzing patterns in how documents cite the same references. Two references are co-cited when they are both cited by the same document. The more frequently two references are co-cited, the stronger their intellectual relationship. This technique, introduced by Small (1973), is one of the foundational methods of bibliometric analysis.
+>
+> Co-citation analysis rests on two complementary approaches:  
+> - Co-citation (Small, 1973): Measures how often two references are cited together by subsequent publications. Highly co-cited references are perceived as intellectually related by the citing community. This method identifies the knowledge base of a field.
+> - Bibliographic coupling (Kessler, 1963): Measures the overlap in the reference lists of two documents. Documents that share many cited references are likely working on similar topics. This method identifies current research fronts.
+>
+> Both approaches build networks where:
+>   Nodes represent cited references (co-citation) or citing documents (bibliographic coupling)
+>   Edges represent the strength of co-citation or bibliographic coupling between two nodes
+>   Clusters represent distinct schools of thought, theoretical frameworks, or research traditions
+
+
+
+## General overview
+
+
+```{r}
+devtools::load_all()
+library(igraph) # for general network analysis
+library(bibliometrix) # to build citation networks
+library(visNetwork)
+library(plotly)
+
+out_data <- here::here("data", "derived-data")
+# load reference list
+ref <- read.csv(file.path(out_data, "mte_references_completed.csv"))
+ref$Project <- firstup(ref$Project)
+# remove references with no DOI
+ref <- ref[!is.na(ref$DOI), ]
+
+ref$Relation <- factor(
+  ref$Relation,
+  levels = c("Proposal", "Top5", "Output"),
+  ordered = TRUE
+)
+ref <- ref[order(ref$Project, ref$Relation, ref$DOI, decreasing = TRUE), ]
+# remove duplicates # sum(duplicated(ref))
+ref <- ref[!duplicated(ref[, c("Project", "DOI")]), ]
+
+meta <- readxl::read_xlsx(
+  here::here("data", "raw-data", "mte", "Projets_FRB-MTECT-OFB.xlsx")
+)
+# all(meta$Acronyme %in% ref$Project)
+
+# either based on previous script
+# M <- readRDS(file.path(out_data, "mte_bibliometrix.rds"))
+# dim(M) # 1035, 57
+# or from shiny completed references
+load(file.path(out_data, "mte_references_oa_shinycomplete.RData"))
+# M$CR has short names that can't be linked back to id_oa
+# how to get the short name
+# dim(M) # 1047, 57
+ref$Short <- M$SR[match(ref$DOI, M$DI)]
+ref$FAut <- M$AU_CORR[match(ref$DOI, M$DI)]
+```
+
+
+
+## Co-citation network
+
+```{r}
+# get the co-citation network of references
+NetMatrix <- bibliometrix::biblioNetwork(
+  M,
+  analysis = "coupling",
+  network = "references",
+  n = NULL,
+  short = FALSE,
+  sep = ";"
+)
+dim(NetMatrix) # 1035
+# table(M$SR %in% dimnames(NetMatrix)[[1]])
+
+# 46722 references with 627 original references
+
+net1 <- igraph::graph_from_adjacency_matrix(
+  NetMatrix,
+  mode = "undirected",
+  diag = FALSE,
+  weighted = TRUE
+)
+
+
+# delete non connected literature
+# net2 <- delete_vertices(net1, degree(net1) == 0)
+net2 <- delete_vertices(net1, components(net1)$membership != 1)
+
+# modularity
+mod2 <- cluster_walktrap(net2)
+clu2 <- membership(mod2)
+sclu2 <- ifelse(clu2 <= (sum(table(clu2) > 1)), clu2, "isolated")
+sclu2 <- as.factor(sclu2)
+cclu <- colorspace::qualitative_hcl(n = nlevels(sclu2), palette = "Dark 3")
+cclu[levels(sclu2) == "isolated"] <- "#808080" # grey
+col2 <- cclu[sclu2]
+
+
+deg2 <- degree(net2)
+
+# V(net1)$size <- sqrt(degree(net1))
+# V(netREF)$label <- ref$Short[match(V(net1)$name, ref$Short)]
+# V(netREF)$year <- ref$Year[match(V(netREF)$name, ref$DOI)]
+# V(netREF)$faut <- ref$FAut[match(V(netREF)$name, ref$DOI)]
+# V(netREF)$fulltitle <- ref$Title[match(V(netREF)$name, ref$DOI)]
+# V(netREF)$shorttitle <- substr(V(netREF)$fulltitle, 1, 25)
+# V(netREF)$title <- paste(
+#   V(netREF)$name,
+#   V(netREF)$year,
+#   V(netREF)$faut,
+#   V(netREF)$shorttitle,
+#   sep = "<br>"
+# )
+table(membership(mod2))
+V(net2)$group <- membership(mod2)
+V(net2)$color <- col2
+
+# check out other layout
+visNetwork::visIgraph(
+  net2,
+  layout = "layout_with_kk",
+  idToLabel = FALSE
+) |>
+  visOptions(
+    highlightNearest = TRUE,
+    selectedBy = list(variable = "group", multiple = T)
+  )
+```
+
+The network has ```r vcount(net2)``` nodes (one node = one article) and ```r ecount(net2)``` edges (one edge = shared citation between two articles). The connectance is ```r round(edge_density(net2, loops = FALSE),3)``` and the modularity ```r round(modularity(mod2),2)```
+
+
+```{r}
+centR <- data.frame(
+  "betweenness" = betweenness(net2),
+  "degree" = degree(net2),
+  "pagerank" = page_rank(net2)$vector,
+  "lab" = V(net2)$name
+)
+
+plot_ly(centR) |>
+  add_markers(
+    x = ~betweenness,
+    y = ~pagerank,
+    size = ~degree,
+    text = ~lab,
+    hoverinfo = "text"
+  ) |>
+  layout(title = "Reference centrality") |>
+  config(
+    modeBarButtons = list(list("toImage")),
+    displaylogo = FALSE
+  )
+```
+
+```{r}
+info <- apply(centR[, -4], 2, round, 5)
+score <- apply(scale(sqrt(info)), 1, mean)
+info <- as.data.frame(info)
+DT::datatable(info[order(score, decreasing = TRUE)[1:50], ])
+```
+
+
+### Per project
+
+```{r}
+info <- c()
+for (i in unique(ref$Project)) {
+  subi <- delete_vertices(
+    net2,
+    !V(net2)$name %in% ref$Short[ref$Project == i]
+  )
+  ni <- c("P" = i, "N" = vcount(subi), "C" = edge_density(subi))
+  info <- rbind(info, ni)
+}
+info <- as.data.frame(info)
+info$N <- as.numeric(info$N)
+info$C <- as.numeric(info$C)
+plot_ly(info) |>
+  add_markers(
+    x = ~N,
+    y = ~C,
+    text = ~P,
+    hoverinfo = "text"
+  ) |>
+  layout(title = "Project bibliographic coupling") |>
+  config(
+    modeBarButtons = list(list("toImage")),
+    displaylogo = FALSE
+  )
+```

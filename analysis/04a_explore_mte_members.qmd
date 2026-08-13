@@ -16,9 +16,8 @@ The objective is to explore the relation among members of [FRB-MTE-OFB projects]
 
 Based on project membership, we:  
 
-- quantify the overlap among projects
 - cluster projects based on shared members 
-- identify members that link multiple projects (*hubs*)
+- identify members that link multiple projects (i.e. *hubs*)
 
 This document is mostly an exploration of network analysis methodology and [interactive visualization](https://datastorm-open.github.io/visNetwork/).  
 
@@ -183,8 +182,7 @@ visNetwork::visIgraph(
   visOptions(
     highlightNearest = TRUE,
     selectedBy = list(variable = "type", multiple = T)
-  ) |>
-  visPhysics(stabilization = FALSE)
+  )
 ```
 
 ### Centrality
@@ -371,8 +369,15 @@ V(netBI)$title <- paste(
 # V(netBI)$size <- 1
 modBI <- cluster_walktrap(netBI)
 
+showBI <- delete_vertices(netBI, degree(netBI) == 1)
 # plot(netBI, layout = layout_as_bipartite(netBI))
-visNetwork::visIgraph(netBI)
+visNetwork::visIgraph(showBI)
 ```
 
-The bipartite network has ```r vcount(netBI)``` nodes, ```r ecount(netBI)``` edges, a connectance of ```r round(edge_density(netBI, loops = FALSE),3)``` and a modularity of ```r round(modularity(modBI),2)```. 
+The bipartite network has ```r vcount(netBI)``` nodes, ```r ecount(netBI)``` edges, and a connectance of ```r round(edge_density(netBI, loops = FALSE),3)```. 
+
+## Conclusion
+
+We identified 5 sub-groups of projects based on shared members and a handful of researchers working on multiple FRB-MTE-OFB projects.   
+
+Yet, the membership is only a rough proxy of research collaboration. To better understand the research being produced, we need to investigate the bibliographic references produced and cited by each of the projects. 

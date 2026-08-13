@@ -17,26 +17,26 @@ source("analysis/01_clean_references.R")
 source("analysis/02_fetch_openalex.R")
 ```
 
-- explore bibliometrix R package
+- explore [bibliometrix R package](https://frbcesab.github.io/biblioscape/analysis/03_explore_bibliometrix.html)
 ```r
 quarto::quarto_render("analysis/03_explore_bibliometrix.qmd")
 ```
 
-- explore MTE membership dataset
+- explore [FRB-MTE-OFB membership network](https://frbcesab.github.io/biblioscape/analysis/04a_explore_mte_members.html)
 ```r
 quarto::quarto_render("analysis/04a_explore_mte_members.qmd")
 ```
 
-- explore MTE citations dataset
+- explore [FRB-MTE-OFB citation  network](https://frbcesab.github.io/biblioscape/analysis/04b_explore_mte_citations.html)  
 ```r
 quarto::quarto_render("analysis/04b_explore_mte_citations.qmd")
 ```
 
-
-- explore co-citation network
+- explore [FRB-MTE-OFB bibliographic coupling]((https://frbcesab.github.io/biblioscape/analysis/04c_explore_mte_coupling.html))  
 ```r
-quarto::quarto_render("analysis/05a_explore_mte_references.qmd")
+quarto::quarto_render("analysis/04c_explore_mte_coupling.qmd")
 ```
+
 <!-- 
 - Article network
 - Author network
@@ -44,9 +44,10 @@ quarto::quarto_render("analysis/05a_explore_mte_references.qmd")
 -->
 
 
-The second case study uses [FRB CESAB projects](https://www.fondationbiodiversite.fr/en/about-the-foundation/le-cesab/):  
+The second case study uses [FRB CESAB projects](https://www.fondationbiodiversite.fr/en/about-the-foundation/le-cesab/):   
 
-- explore CESAB membership dataset
+
+- explore CESAB membership dataset  
 ```r
 quarto::quarto_render("analysis/04b_explore_cesab_members.qmd")
 ```
@@ -55,7 +56,7 @@ quarto::quarto_render("analysis/04b_explore_cesab_members.qmd")
 
 Many documents are available online. 
 
-- render the Readme
+- render the online index
 ```r
 quarto::quarto_render("index.qmd")
 ```
