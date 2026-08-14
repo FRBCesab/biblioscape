@@ -1,0 +1,422 @@
+---
+title: "Exploration of CESAB groups"
+author: Romain Frelat
+date: today
+format: 
+  html:
+    code-fold: true
+    toc: true
+execute:
+  echo: true
+  warning: false
+---
+
+
+The objective is to explore the diversity of [FRB CESAB projects](https://www.fondationbiodiversite.fr/en/about-the-foundation/le-cesab/) through network analysis. The exploration contains three parts:  
+
+1. membership network
+2. citation coupling network
+
+
+
+## 1. Group membership
+
+```{r}
+#| label: data-preprocessing
+#| echo: false
+#| eval: false
+
+# load reference list
+cesab <- readxl::read_xlsx(
+  in_data <- here::here("data", "raw-data", "cesab", "CESAB_Members.xlsx")
+)
+# remove workshop participation
+cesab <- cesab[, 1:15]
+
+# simplify affiliation
+# table(cesab$affiliation[grepl("univ", tolower(cesab$affiliation))])
+cesab$affiliation[grepl("univ", tolower(cesab$affiliation))] <- "University"
+cesab$affiliation[cesab$affiliation == "UM"] <- "University"
+
+# Membres fondateurs
+mf <- c("CIRAD", "CNRS", "FRB", "IFREMER", "INRAE", "IRD", "MNHN", "OFB")
+in_mf <- toupper(cesab$affiliation) %in% mf
+cesab$affiliation[in_mf] <- toupper(cesab$affiliation[in_mf])
+
+# Other
+cesab$affiliation[!cesab$affiliation %in% c("University", mf)] <- "Other"
+
+# should I keep only actual members
+# table(cesab$still_member)
+
+# should I remove guest ?
+#fmt: skip
+cesab$function_in_group[cesab$function_in_group%in%c("Guesi", "guest")] <- "Guest"
+#fmt: skip
+cesab$function_in_group[cesab$function_in_group%in%c("Membre")] <- "Member"
+#fmt: skip
+cesab$function_in_group[cesab$function_in_group%in%c("Post-doc")] <- "Post-Doc"
+# table(cesab$function_in_group)
+
+# check names and duplicates
+cesab$name <- paste(cesab$lastname, cesab$firstname)
+
+dupname <- duplicated(cesab$name)
+dupemail <- duplicated(cesab$emails) & !is.na(cesab$emails)
+# table(dupname, dupemail)
+# changes of emails : ok
+# error <- (dupname & !dupemail)
+# ceserr <- cesab[cesab$name %in% cesab$name[error], ]
+# ceserr[order(ceserr$name), ]
+# errors in name spelling : to be corrected
+error <- (dupemail & !dupname)
+ceserr <- cesab[cesab$emails %in% cesab$emails[error], ]
+ceserr[order(ceserr$name), c("emails", "name")]
+cesab$name <- gsub("Guerin Joana", "Guerrin Joana", cesab$name)
+cesab$name <- gsub("Rush Adrien", "Rusch Adrien", cesab$name)
+cesab$name <- gsub("^Shin Yunne$", "Shin Yunne-Jai", cesab$name)
+cesab$name <- gsub("Thackeray Steeve", "Thackeray Stephen", cesab$name)
+cesab$name <- gsub("Guillemot Joannès", "Guillemot Joannes", cesab$name)
+cesab$name <- gsub("Shatz Bertrand", "Schatz Bertrand", cesab$name)
+
+write.csv(
+  cesab,
+  here::here("data", "derived-data", "cesab_members.csv"),
+  row.names = FALSE
+)
+```
+
+
+```{r}
+#| label: setup
+devtools::load_all()
+library(igraph)
+library(visNetwork)
+library(plotly)
+library(bibliometrix) # to build citation networks
+
+# load reference list
+out_data <- here::here("data", "derived-data")
+cesab <- read.csv(
+  here::here("data", "derived-data", "cesab_members.csv")
+)
+
+# remove guest and stagiaire
+cesab <- cesab[!cesab$function_in_group %in% c("Guest", "Stagiaire"), ]
+
+# remove non active members (and keep NA)
+cesab <- cesab[!cesab$still_member %in% 0, ]
+
+table(cesab$group, cesab$function_in_group)
+
+nmem <- table(cesab$group)
+nproj <- table(table(cesab$name))
+# summary(as.numeric(table(cesab$group)))
+# # table(duplicated(cesab))
+# nrow(cesab) # 1015 membership
+```
+
+Among the ```r length(nmem)```  CESAB projects, there were ```r length(unique(cesab$name))``` different researchers. Most of the researcher have been member of a single project (N=```r nproj["1"]```), but ```r nproj["2"]``` researchers collaborated to 2 projects; and ```r sum(nproj[-(1:2)])``` researchers works on 3 projects or more.  
+
+In average, a CESAB project has ```r round(mean(nmem), 1)``` members, with a minimum of ```r  min(nmem)``` for ```r names(which.min(nmem))``` and a maximum of ```r  max(nmem)``` for ```r names(which.max(nmem))```.
+
+### Bipartite membership network
+
+```{r}
+netBI <- graph_from_data_frame(
+  cesab[, c("name", "group")]
+)
+V(netBI)$type <- V(netBI)$name %in% cesab$group
+
+V(netBI)$color <- ifelse(V(netBI)$type, "blue", "red")
+V(netBI)$shape <- ifelse(V(netBI)$type, "square", "dot")
+# V(netBI)$size <- ifelse(V(netBI)$type, 3, 1)
+
+extra <- ifelse(
+  V(netBI)$type,
+  "",
+  cesab$affiliation[match(V(netBI)$name, cesab$name)]
+)
+V(netBI)$title <- paste(
+  V(netBI)$name,
+  extra,
+  sep = "<br>"
+)
+
+# remove members that are not connected to multiple groups
+# for visualization purpose only
+showBI <- delete_vertices(netBI, degree(netBI) == 1)
+# plot(netBI, layout = layout_as_bipartite(netBI))
+visNetwork::visIgraph(showBI) |>
+  visOptions(
+    highlightNearest = TRUE
+  )
+# visNetwork(nodes, edges, width = "100%") %>%
+#   visGroups(
+#     groupname = "A",
+#     shape = "icon",
+#     icon = list(code = "f0c0", size = 75)
+#   ) %>%
+#   visGroups(
+#     groupname = "B",
+#     shape = "icon",
+#     icon = list(code = "f007", color = "red")
+#   ) %>%
+#   addFontAwesome()
+```
+
+```{r}
+splitBI <- bipartite_projection(netBI)
+netMEM <- splitBI$proj1
+netPR <- splitBI$proj2
+```
+
+
+### Project network
+
+Based on the number of shared members, we can build a network of projects.
+
+```{r}
+#netPR2 <- delete_vertices(netPR, degree(netPR) == 1)
+modPR <- cluster_fast_greedy(netPR)
+cluPR <- membership(modPR)
+nclu <- table(cluPR)
+cclu <- colorspace::qualitative_hcl(n = length(nclu), palette = "Dark 3")
+cclu[nclu == 1] <- "#808080" # grey
+colPR <- cclu[cluPR]
+simclu <- ifelse(cluPR <= (sum(nclu > 1)), cluPR, "isolated")
+```
+
+
+The network has ```r vcount(netPR)``` nodes (one node = one project) and ```r ecount(netPR)``` edges (one edge = shared reference between two projects). The connectance is ```r round(edge_density(netPR, loops = FALSE),3)``` and the modularity ```r round(modularity(modPR),2)```
+
+
+```{r}
+V(netPR)$group <- simclu
+V(netPR)$color <- colPR
+E(netPR)$width <- E(netPR)$weight
+E(netPR)$title <- E(netPR)$weight
+V(netPR)$title <- V(netPR)$name
+
+visNetwork::visIgraph(
+  netPR,
+  randomSeed = 54,
+  layout = "layout_nicely",
+  smooth = TRUE,
+  type = "full"
+) |>
+  visOptions(
+    highlightNearest = TRUE,
+    selectedBy = list(variable = "group", multiple = T)
+  )
+```
+
+
+```{r}
+# identify cliques
+for (i in sort(unique(simclu))) {
+  print(paste(
+    i,
+    paste(V(netPR)$name[simclu == i], collapse = ", "),
+    sep = ": "
+  ))
+}
+```
+
+```{r}
+centP <- data.frame(
+  "degree" = degree(netPR),
+  "pagerank" = page_rank(netPR)$vector,
+  "betweenness" = betweenness(netPR),
+  "lab" = V(netPR)$title,
+  "color" = colPR
+)
+
+plot_ly(centP) |>
+  add_markers(
+    x = jitter(centP$degree),
+    y = ~pagerank,
+    marker = list(color = ~color, line = list(color = ~color)),
+    text = ~lab,
+    hoverinfo = "text"
+  ) |>
+  layout(title = "Project centrality") |>
+  config(
+    modeBarButtons = list(list("toImage")),
+    displaylogo = FALSE
+  )
+```
+
+
+```{r}
+info <- apply(centP[, 1:3], 2, round, 3)
+score <- apply(scale(sqrt(info)), 1, mean)
+DT::datatable(info[order(score, decreasing = TRUE), ])
+```
+
+### Member centrality
+
+```{r}
+E(netMEM)$width <- E(netMEM)$weight
+V(netMEM)$size <- log(degree(netMEM))
+V(netMEM)$title <- V(netMEM)$name
+# visNetwork::visIgraph(netMEM, randomSeed = 54, layout = "layout_nicely") |>
+#   visOptions(
+#     highlightNearest = TRUE,
+#   )
+```
+
+```{r}
+centR <- data.frame(
+  "betweenness" = betweenness(netMEM),
+  "degree" = degree(netMEM),
+  "pagerank" = page_rank(netMEM)$vector,
+  "lab" = V(netMEM)$title
+)
+
+plot_ly(centR) |>
+  add_markers(
+    x = ~betweenness,
+    y = ~pagerank,
+    size = ~degree,
+    text = ~lab,
+    hoverinfo = "text"
+  ) |>
+  layout(title = "Reference centrality") |>
+  config(
+    modeBarButtons = list(list("toImage")),
+    displaylogo = FALSE
+  )
+```
+
+```{r}
+info <- apply(centR[, -4], 2, round, 5)
+score <- apply(scale(sqrt(info)), 1, mean)
+info <- as.data.frame(info)
+
+infoV <- tapply(cesab$group, cesab$name, paste, collapse = ",")
+info$project <- infoV[match(row.names(info), names(infoV))]
+# info$first_aut <- V(netREF)$faut
+# info$year <- V(netREF)$year
+# info$short_title <- V(netREF)$shorttitle
+DT::datatable(info[order(score, decreasing = TRUE)[1:50], ])
+```
+
+
+## 2. Citation coupling
+
+
+```{r}
+# missing the association reference <-> project ...
+# ref <- read.csv("data/raw-data/cesab/Zotero_FRB-CESAB.csv")
+
+M <- readRDS(file.path(out_data, "cesab_bibliometrix.rds"))
+M$shortjournal <- abbreviate(M$SO, 10)
+M$shorttitle <- substr(M$display_name, 1, 30)
+# get the co-citation network of references
+NetMatrix <- bibliometrix::biblioNetwork(
+  M,
+  analysis = "coupling",
+  network = "references",
+  n = NULL,
+  short = FALSE,
+  sep = ";"
+)
+dim(NetMatrix) # 395
+# table(M$SR %in% dimnames(NetMatrix)[[1]])
+
+# 46722 references with 627 original references
+
+net1 <- igraph::graph_from_adjacency_matrix(
+  NetMatrix,
+  mode = "undirected",
+  diag = FALSE,
+  weighted = TRUE
+)
+V(net1)$name <- M$shortname[match(V(net1)$name, M$SR)]
+
+mod1 <- cluster_fast_greedy(net1)
+
+
+# delete non connected literature
+# net2 <- delete_vertices(net1, degree(net1) == 0)
+net2 <- delete_vertices(net1, components(net1)$membership != 1)
+
+# modularity
+mod2 <- cluster_fast_greedy(net2)
+clu2 <- membership(mod2)
+sclu2 <- ifelse(clu2 <= (sum(table(clu2) > 1)), clu2, "isolated")
+sclu2 <- as.factor(sclu2)
+cclu <- colorspace::qualitative_hcl(n = nlevels(sclu2), palette = "Dark 3")
+cclu[levels(sclu2) == "isolated"] <- "#808080" # grey
+col2 <- cclu[sclu2]
+
+deg2 <- degree(net2)
+```
+
+```{r}
+# V(net1)$size <- sqrt(degree(net1))
+# V(netREF)$label <- ref$Short[match(V(net1)$name, ref$Short)]
+# V(netREF)$year <- ref$Year[match(V(netREF)$name, ref$DOI)]
+# V(netREF)$faut <- ref$FAut[match(V(netREF)$name, ref$DOI)]
+# V(netREF)$fulltitle <- ref$Title[match(V(netREF)$name, ref$DOI)]
+# V(netREF)$shorttitle <- substr(V(netREF)$fulltitle, 1, 25)
+
+V(net2)$title <- paste(
+  V(net2)$name,
+  M$shortjournal[match(V(net2)$name, M$shortname)],
+  M$shorttitle[match(V(net2)$name, M$shortname)],
+  sep = "<br>"
+)
+V(net2)$group <- membership(mod2)
+V(net2)$color <- col2
+
+# check out other layout
+visNetwork::visIgraph(
+  net2,
+  layout = "layout_with_kk",
+  idToLabel = FALSE
+) |>
+  visOptions(
+    highlightNearest = TRUE,
+    selectedBy = list(variable = "group", multiple = T)
+  )
+```
+
+The network has ```r vcount(net1)``` nodes (one node = one article) and ```r ecount(net1)``` edges (one edge = shared citation between two articles). The connectance is ```r round(edge_density(net1, loops = FALSE),3)``` and the modularity ```r round(modularity(mod1),2)```
+
+```{r}
+centR <- data.frame(
+  "betweenness" = betweenness(net2),
+  "degree" = degree(net2),
+  "pagerank" = page_rank(net2)$vector,
+  "color" = V(net2)$color,
+  "lab" = V(net2)$title
+)
+
+plot_ly(centR) |>
+  add_markers(
+    x = ~betweenness,
+    y = ~pagerank,
+    size = ~degree,
+    marker = list(color = ~color, line = list(color = ~color)),
+    text = ~lab,
+    hoverinfo = "text"
+  ) |>
+  layout(title = "Reference centrality") |>
+  config(
+    modeBarButtons = list(list("toImage")),
+    displaylogo = FALSE
+  )
+```
+
+```{r}
+info <- apply(centR[, 1:3], 2, round, 5)
+score <- apply(scale(sqrt(info)), 1, mean)
+info <- as.data.frame(info)
+
+info$shortjournal <- M$shortjournal[match(row.names(info), M$shortname)]
+info$shorttitle <- M$shorttitle[match(row.names(info), M$shortname)]
+DT::datatable(info[order(score, decreasing = TRUE)[1:50], ])
+```
+

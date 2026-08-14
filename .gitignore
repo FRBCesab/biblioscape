@@ -5,6 +5,9 @@ analysis/dev*
 _freeze/
 
 *.xlsx
-data/derived-data/mte_members.csv
+data/derived-data/*_members.csv
+data/raw-data/cesab/
+
+data/derived-data/cesab*
 
 R/plotfw.R

@@ -32,7 +32,7 @@ quarto::quarto_render("analysis/04a_explore_mte_members.qmd")
 quarto::quarto_render("analysis/04b_explore_mte_citations.qmd")
 ```
 
-- explore [FRB-MTE-OFB bibliographic coupling]((https://frbcesab.github.io/biblioscape/analysis/04c_explore_mte_coupling.html))  
+- explore [FRB-MTE-OFB bibliographic coupling](https://frbcesab.github.io/biblioscape/analysis/04c_explore_mte_coupling.html)  
 ```r
 quarto::quarto_render("analysis/04c_explore_mte_coupling.qmd")
 ```
@@ -46,10 +46,9 @@ quarto::quarto_render("analysis/04c_explore_mte_coupling.qmd")
 
 The second case study uses [FRB CESAB projects](https://www.fondationbiodiversite.fr/en/about-the-foundation/le-cesab/):   
 
-
-- explore CESAB membership dataset  
+- explore [CESAB networks](https://frbcesab.github.io/biblioscape/analysis/05a_explore_cesab.html)    
 ```r
-quarto::quarto_render("analysis/04b_explore_cesab_members.qmd")
+quarto::quarto_render("analysis/05a_explore_cesab.qmd")
 ```
 
 

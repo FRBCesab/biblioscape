@@ -13,4 +13,4 @@ Exploration with MTE dataset
 
 Exploration with CESAB dataset  
 
-10. [Exploration of group member network](https://frbcesab.github.io/biblioscape/analysis/04b_explore_cesab_members.html)
+5. [Exploration of CESAB networks](https://frbcesab.github.io/biblioscape/analysis/05a_explore_cesab.html)    
