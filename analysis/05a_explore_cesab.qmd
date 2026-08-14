@@ -12,14 +12,14 @@ execute:
 ---
 
 
-The objective is to explore the diversity of [FRB CESAB projects](https://www.fondationbiodiversite.fr/en/about-the-foundation/le-cesab/) through network analysis. The exploration contains three parts:  
+The objective is this document is to explore the diversity and interconnectedness of [FRB CESAB projects](https://www.fondationbiodiversite.fr/en/about-the-foundation/le-cesab/) using network analysis. The exploration consists of two complementary analysis:  
 
-1. membership network
-2. citation coupling network
+1. project membership network (@sec-member)
+2. citation coupling network (@sec-citation)
 
 
 
-## 1. Group membership
+## 1. Project membership {#sec-member}
 
 ```{r}
 #| label: data-preprocessing
@@ -90,10 +90,14 @@ write.csv(
 ```{r}
 #| label: setup
 devtools::load_all()
+
 library(igraph)
 library(visNetwork)
 library(plotly)
 library(bibliometrix) # to build citation networks
+
+# remotes::install_github("patrickbarks/abbrevr")
+library(abbrevr)
 
 # load reference list
 out_data <- here::here("data", "derived-data")
@@ -116,9 +120,9 @@ nproj <- table(table(cesab$name))
 # nrow(cesab) # 1015 membership
 ```
 
-Among the ```r length(nmem)```  CESAB projects, there were ```r length(unique(cesab$name))``` different researchers. Most of the researcher have been member of a single project (N=```r nproj["1"]```), but ```r nproj["2"]``` researchers collaborated to 2 projects; and ```r sum(nproj[-(1:2)])``` researchers works on 3 projects or more.  
+The FRB-Cesab hosted```r length(nmem)```  projects with ```r length(unique(cesab$name))``` different researchers. Most researchers participated in a single project (N=```r nproj["1"]```), but ```r nproj["2"]``` researchers collaborated to two projects; and ```r sum(nproj[-(1:2)])``` researchers worked on three or more projects.  
 
-In average, a CESAB project has ```r round(mean(nmem), 1)``` members, with a minimum of ```r  min(nmem)``` for ```r names(which.min(nmem))``` and a maximum of ```r  max(nmem)``` for ```r names(which.max(nmem))```.
+On average, a CESAB project includes ```r round(mean(nmem), 1)``` members, with a minimum of ```r  min(nmem)``` for ```r names(which.min(nmem))``` and a maximum of ```r  max(nmem)``` for ```r names(which.max(nmem))```.
 
 ### Bipartite membership network
 
@@ -151,18 +155,6 @@ visNetwork::visIgraph(showBI) |>
   visOptions(
     highlightNearest = TRUE
   )
-# visNetwork(nodes, edges, width = "100%") %>%
-#   visGroups(
-#     groupname = "A",
-#     shape = "icon",
-#     icon = list(code = "f0c0", size = 75)
-#   ) %>%
-#   visGroups(
-#     groupname = "B",
-#     shape = "icon",
-#     icon = list(code = "f007", color = "red")
-#   ) %>%
-#   addFontAwesome()
 ```
 
 ```{r}
@@ -178,6 +170,17 @@ Based on the number of shared members, we can build a network of projects.
 
 ```{r}
 #netPR2 <- delete_vertices(netPR, degree(netPR) == 1)
+
+# Jaccard transformation to handle uneven nomber of members
+# sim <- similarity(netPR, method = "jaccard")
+# diag(sim) <- 0
+# netPRj <- igraph::graph_from_adjacency_matrix(
+#   sim,
+#   mode = "undirected",
+#   weighted = TRUE
+# )
+# V(netPRj)$name <- V(netPR)$name
+
 modPR <- cluster_fast_greedy(netPR)
 cluPR <- membership(modPR)
 nclu <- table(cluPR)
@@ -188,14 +191,14 @@ simclu <- ifelse(cluPR <= (sum(nclu > 1)), cluPR, "isolated")
 ```
 
 
-The network has ```r vcount(netPR)``` nodes (one node = one project) and ```r ecount(netPR)``` edges (one edge = shared reference between two projects). The connectance is ```r round(edge_density(netPR, loops = FALSE),3)``` and the modularity ```r round(modularity(modPR),2)```
+The network has ```r vcount(netPR)``` nodes (one node = one project) and ```r ecount(netPR)``` edges (one edge = shared member between two projects). The connectance is ```r round(edge_density(netPR, loops = FALSE),3)``` and the modularity ```r round(modularity(modPR),2)```
 
 
 ```{r}
 V(netPR)$group <- simclu
 V(netPR)$color <- colPR
-E(netPR)$width <- E(netPR)$weight
-E(netPR)$title <- E(netPR)$weight
+# E(netPRj)$width <- E(netPR)$weight
+# E(netPRj)$title <- E(netPR)$weight
 V(netPR)$title <- V(netPR)$name
 
 visNetwork::visIgraph(
@@ -234,7 +237,7 @@ centP <- data.frame(
 
 plot_ly(centP) |>
   add_markers(
-    x = jitter(centP$degree),
+    x = ~betweenness,
     y = ~pagerank,
     marker = list(color = ~color, line = list(color = ~color)),
     text = ~lab,
@@ -282,7 +285,7 @@ plot_ly(centR) |>
     text = ~lab,
     hoverinfo = "text"
   ) |>
-  layout(title = "Reference centrality") |>
+  layout(title = "Member centrality") |>
   config(
     modeBarButtons = list(list("toImage")),
     displaylogo = FALSE
@@ -299,20 +302,36 @@ info$project <- infoV[match(row.names(info), names(infoV))]
 # info$first_aut <- V(netREF)$faut
 # info$year <- V(netREF)$year
 # info$short_title <- V(netREF)$shorttitle
-DT::datatable(info[order(score, decreasing = TRUE)[1:50], ])
+DT::datatable(info[order(score, decreasing = TRUE), ])
 ```
 
 
-## 2. Citation coupling
+## 2. Citation coupling {#sec-citation}
 
+We estimate the distance among papers produced by the projects by using the bibliographic coupling, i.e. the pairwize overlap in the reference lists. Documents that share many references are likely working on similar topics or using similar methods.  
 
+### Coupling network
 ```{r}
 # missing the association reference <-> project ...
-# ref <- read.csv("data/raw-data/cesab/Zotero_FRB-CESAB.csv")
+# ref <- read.csv(here::here("data", "raw-data", "cesab", "Zotero_FRB-CESAB.csv"))
+# conv <- data.frame(
+#   "abb" = ref$Journal.Abbreviation,
+#   "ori" = ref$Publication.Title
+# )
+# conv <- conv[!duplicated(conv), ]
 
 M <- readRDS(file.path(out_data, "cesab_bibliometrix.rds"))
-M$shortjournal <- abbreviate(M$SO, 10)
-M$shorttitle <- substr(M$display_name, 1, 30)
+
+conv <- data.frame(
+  "ori" = sort(unique(M$SO))
+)
+conv$abb <- sapply(firstup(conv$ori), abbrevr::AbbrevTitle, USE.NAMES = FALSE)
+
+# conv <- conv[!duplicated(conv), ]
+mconv <- match(tolower(M$SO), tolower(conv$ori))
+
+M$shortjournal <- conv$abb[match(M$SO, conv$ori)]
+M$shorttitle <- substr(firstup(M$display_name), 1, 30)
 # get the co-citation network of references
 NetMatrix <- bibliometrix::biblioNetwork(
   M,
@@ -322,7 +341,7 @@ NetMatrix <- bibliometrix::biblioNetwork(
   short = FALSE,
   sep = ";"
 )
-dim(NetMatrix) # 395
+# dim(NetMatrix) # 395
 # table(M$SR %in% dimnames(NetMatrix)[[1]])
 
 # 46722 references with 627 original references
@@ -354,6 +373,10 @@ col2 <- cclu[sclu2]
 deg2 <- degree(net2)
 ```
 
+The network has ```r vcount(net1)``` nodes (one node = one article), and ```r scales::comma(ecount(net1))``` edges (one edge = shared references between two articles). The connectance is ```r round(edge_density(netPR, loops = FALSE),3)``` and the modularity ```r round(modularity(modPR),2)```
+
+
+For visual representation, we only keep the largest connected community of articles (we removed the disconnected articles).
 ```{r}
 # V(net1)$size <- sqrt(degree(net1))
 # V(netREF)$label <- ref$Short[match(V(net1)$name, ref$Short)]
@@ -383,7 +406,8 @@ visNetwork::visIgraph(
   )
 ```
 
-The network has ```r vcount(net1)``` nodes (one node = one article) and ```r ecount(net1)``` edges (one edge = shared citation between two articles). The connectance is ```r round(edge_density(net1, loops = FALSE),3)``` and the modularity ```r round(modularity(mod1),2)```
+
+### Article centrality
 
 ```{r}
 centR <- data.frame(
@@ -420,3 +444,7 @@ info$shorttitle <- M$shorttitle[match(row.names(info), M$shortname)]
 DT::datatable(info[order(score, decreasing = TRUE)[1:50], ])
 ```
 
+## Conclusion
+
+- missing year of project for a temporal analysis
+- missing the link between project and references (how to export it from Zenodo?)

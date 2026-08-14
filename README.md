@@ -37,12 +37,6 @@ quarto::quarto_render("analysis/04b_explore_mte_citations.qmd")
 quarto::quarto_render("analysis/04c_explore_mte_coupling.qmd")
 ```
 
-<!-- 
-- Article network
-- Author network
-- multi-layer network 
--->
-
 
 The second case study uses [FRB CESAB projects](https://www.fondationbiodiversite.fr/en/about-the-foundation/le-cesab/):   
 
