@@ -1,6 +1,6 @@
 # Overview {.unnumbered}
 
-Exploration with MTE dataset
+Exploration with FRB-MTE-OFB dataset: 
 
 1. [Exploration of bibliometrix output](https://frbcesab.github.io/biblioscape/analysis/03_explore_bibliometrix.html)  
 
@@ -11,6 +11,6 @@ Exploration with MTE dataset
 4. [Exploration of bibliographic coupling](https://frbcesab.github.io/biblioscape/analysis/04c_explore_mte_coupling.html)
 
 
-Exploration with CESAB dataset  
+Exploration with CESAB dataset:    
 
-5. [Exploration of CESAB networks](https://frbcesab.github.io/biblioscape/analysis/05a_explore_cesab.html)    
+5. [Exploration of CESAB networks](https://frbcesab.github.io/biblioscape/analysis/C3_explore_cesab.html)    

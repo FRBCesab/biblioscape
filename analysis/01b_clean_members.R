@@ -31,5 +31,5 @@ write.csv(
     row.names = FALSE
 )
 
-mte <- read.csv(file.path(out_data, "mte_members.csv"))
-table(mte$group, mte$function_in_group)
+# mte <- read.csv(file.path(out_data, "mte_members.csv"))
+# table(mte$group, mte$function_in_group)

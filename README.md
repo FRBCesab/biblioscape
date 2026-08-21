@@ -1,14 +1,22 @@
 # Biblioscape
 
-Research compendium for visualizing the scientific landscape through bibliographic network analysis
+Research compendium for visualizing the scientific landscape through bibliographic network analysis.
 
+
+### FRB-MTE-OFB projects
 
 The first case study uses [FRB-MTE-OFB projects](https://www.fondationbiodiversite.fr/la-frb-en-action/programmes-et-projets/impacts-sur-la-biodiversite-terrestre-dans-lanthropocene/):  
 
 - clean references and get their DOI when missing
 
 ``` r
-source("analysis/01_clean_references.R")
+source("analysis/01a_clean_references.R")
+```
+
+- clean membership spellings
+
+``` r
+source("analysis/01b_clean_members.R")
 ```
 
 - fetch records from [openalex database](https://openalex.org/)
@@ -38,26 +46,41 @@ quarto::quarto_render("analysis/04c_explore_mte_coupling.qmd")
 ```
 
 
+### FRB-CESAB projects
+
 The second case study uses [FRB CESAB projects](https://www.fondationbiodiversite.fr/en/about-the-foundation/le-cesab/):   
 
-- explore [CESAB networks](https://frbcesab.github.io/biblioscape/analysis/05a_explore_cesab.html)    
+1. clean group membership data
+
+``` r
+source("analysis/C1_clean_cesab_members.R")
+```
+
+2. process CESAB references and fetch records from [openalex database](https://openalex.org/)
+
+``` r
+source("analysis/C2_prepare_cesab_ref.R")
+```
+
+3. explore [CESAB networks](https://frbcesab.github.io/biblioscape/analysis/C3_explore_cesab.html)    
 ```r
-quarto::quarto_render("analysis/05a_explore_cesab.qmd")
+quarto::quarto_render("analysis/C3_explore_cesab.qmd")
 ```
 
 
 
+### Online index
+
 Many documents are available online. 
 
-- render the online index
+- render the index
 ```r
 quarto::quarto_render("index.qmd")
 ```
 
 
 
-
-## References:   
+### References:   
 
 - Aria, M., Le, T., Cuccurullo, C., Belfiore, A., & Choe, J. (2024). openalexR: An R-Tool for Collecting Bibliometric Data from OpenAlex. R J., 15(4), 167-180.  
 
@@ -67,6 +90,6 @@ quarto::quarto_render("index.qmd")
 
 - Csardi G, Nepusz T (2006). “The igraph software package for complex network research.” InterJournal, Complex Systems, 1695. https://igraph.org.  
 
-## Tutorial on network analysis
+### Tutorial on network analysis
 
 - Hugues Pecout H, Beauguitte L, Fernandez M (2023) Analyse de réseau avec igraph, <https://elementr.gitpages.huma-num.fr/session_reseau/intro_reseau_igraph/igraph.html>
