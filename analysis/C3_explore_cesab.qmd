@@ -12,17 +12,18 @@ execute:
 ---
 
 
-The objective is this document is to explore the diversity and interconnectedness of [FRB CESAB projects](https://www.fondationbiodiversite.fr/en/about-the-foundation/le-cesab/) using network analysis. The exploration consists of two complementary analysis:  
+The objective is this document is to explore the diversity and interconnectedness of [FRB CESAB projects](https://www.fondationbiodiversite.fr/en/about-the-foundation/le-cesab/) using network analysis. The exploration consists of two complementary analysis:   
 
-- @sec-member project membership network  
-- @sec-citation citation coupling network  
+1. [Project membership network](#project-membership) based on who is collaborating in the projects   
+2. [Citation coupling network](#citation-coupling)  based on the scientific articles published by projects
 
 
 
-## 1. Project membership {#sec-member}
+## 1. Project membership
 
 ```{r}
 #| label: setup
+#| echo: false
 devtools::load_all()
 
 library(igraph)
@@ -55,6 +56,32 @@ nproj <- table(table(cesab$name))
 # summary(as.numeric(table(cesab$group)))
 # # table(duplicated(cesab))
 # nrow(cesab) # 1015 membership
+
+# citation dataset
+M <- readRDS(file.path(out_data, "cesab_bibliometrix.rds"))
+
+conv <- data.frame(
+  "ori" = sort(unique(M$SO))
+)
+conv$abb <- sapply(firstup(conv$ori), abbrevr::AbbrevTitle, USE.NAMES = FALSE)
+# conv <- conv[!duplicated(conv), ]
+mconv <- match(tolower(M$SO), tolower(conv$ori))
+
+M$shortjournal <- conv$abb[match(M$SO, conv$ori)]
+M$shorttitle <- substr(firstup(M$display_name), 1, 30)
+M$breaktitle <- breaks_string(firstup(M$display_name))
+M$linkDOI <- paste0(
+  "<a href=\'",
+  paste0("https://www.doi.org/", M$DI),
+  "\'>",
+  M$DI,
+  "</a>"
+)
+
+M$project <- gsub("PPR Oceans", "PPR Océans", M$project)
+# keep only references in CESAB group (or in Core)
+# remove Desybel
+M <- M[!M$project %in% "Desybel", ]
 ```
 
 
@@ -111,7 +138,7 @@ visNetwork::visIgraph(
   )
 ```
 
-The bipartite network offer a complete visualization of the projects (blue square) and their members (red circles) (@fig-bimem). The complexity of handling two types of node (project and member) prevent further  in-dept analysis. The bipartite network can be projected into (1) a project network, and (2) a member network.  
+The bipartite network offer a complete visualization of the projects (blue square) and their members (red circles) (@fig-bimem). However, the complexity of handling two types of nodes (project and member) prevent further in-depth analysis. The bipartite network can be projected into (1) [a project network](#project-network), and (2) [a member network](#member-network).  
 
 ```{r}
 #| echo: false
@@ -149,7 +176,7 @@ colPR <- cclu[simclu]
 ```
 
 
-The network has ```r vcount(netPR)``` nodes (one node = one project) and ```r ecount(netPR)``` edges (one edge = shared member between two projects). The connectance is ```r round(edge_density(netPR, loops = FALSE),3)``` (very low) and the modularity is ```r round(modularity(modPR),2)``` (moderately high). It means that there are few connections among projects but they are organized in sub-groups (called modules) that are highly connected within module.
+The network has ```r vcount(netPR)``` nodes (one node = one project) and ```r ecount(netPR)``` edges (one edge = shared member between two projects). The connectance is ```r round(edge_density(netPR, loops = FALSE),3)``` (very low) and the modularity is ```r round(modularity(modPR),2)``` (moderately high). It means that there are few connections among projects but they are organized in highly connected sub-groups (called modules).
 
 #### Modules
 
@@ -195,7 +222,7 @@ for (i in sort(unique(simclu))) {
 
 ```{r}
 #| label: fig-netyrmempro
-#| fig-cap: "Project network of shared membership organised per starting year (x-axis) and module (y-axis)."
+#| fig-cap: "Project network of shared membership visualized per starting year (in x-axis) and per module (in y-axis)."
 #| 
 
 # x-axis by year
@@ -279,7 +306,7 @@ The member network is made of nodes representing members and edges representing 
 
 #### Member centrality
 
-The member centrality quantifies how individual member connects different parts of the network.   
+The member centrality quantifies how individuals connect different parts of the network. As previously, it is quantified by three indicators: degree, Google PageRank, and Betweenness.   
 
 ```{r}
 #| label: fig-cenmem
@@ -338,33 +365,15 @@ DT::datatable(info[order(score, decreasing = TRUE), ])
 ```
 
 
-## 2. Citation coupling {#sec-citation}
+## 2. Citation coupling 
 
-We estimate the distance among papers produced by CESAB projects by using the bibliographic coupling, i.e. the pairwize overlap in the reference lists. Documents that share many references are likely working on similar topics or using similar methods.  
+Another way to measure the closeness or distance between scientific projects is to use the scientific articles published from the project activities.
+
+The CESAB projects published ```r nrow(M)```  scientific articles between ```r min(M$PY)``` and ```r max(M$PY)```. We estimate the distance among articles by using the bibliographic coupling, i.e. the pairwize overlap in the reference lists. Documents that share many references are likely working on similar topics or using similar methods.  
 
 ### Coupling network
 
 ```{r}
-# missing the association reference <-> project ...
-# ref <- read.csv(here::here("data", "raw-data", "cesab", "Zotero_FRB-CESAB.csv"))
-# conv <- data.frame(
-#   "abb" = ref$Journal.Abbreviation,
-#   "ori" = ref$Publication.Title
-# )
-# conv <- conv[!duplicated(conv), ]
-
-M <- readRDS(file.path(out_data, "cesab_bibliometrix.rds"))
-
-conv <- data.frame(
-  "ori" = sort(unique(M$SO))
-)
-conv$abb <- sapply(firstup(conv$ori), abbrevr::AbbrevTitle, USE.NAMES = FALSE)
-
-# conv <- conv[!duplicated(conv), ]
-mconv <- match(tolower(M$SO), tolower(conv$ori))
-
-M$shortjournal <- conv$abb[match(M$SO, conv$ori)]
-M$shorttitle <- substr(firstup(M$display_name), 1, 30)
 # get the co-citation network of references
 NetMatrix <- bibliometrix::biblioNetwork(
   M,
@@ -374,66 +383,60 @@ NetMatrix <- bibliometrix::biblioNetwork(
   short = FALSE,
   sep = ";"
 )
-# dim(NetMatrix) # 395
-# table(M$SR %in% dimnames(NetMatrix)[[1]])
+# dim(NetMatrix) # 406
 
-# 46722 references with 627 original references
-
-net1 <- igraph::graph_from_adjacency_matrix(
+netCC <- igraph::graph_from_adjacency_matrix(
   NetMatrix,
   mode = "undirected",
   diag = FALSE,
   weighted = TRUE
 )
-V(net1)$name <- M$shortname[match(V(net1)$name, M$SR)]
+V(netCC)$name <- M$shortname[match(V(netCC)$name, M$SR)]
 
-mod1 <- cluster_fast_greedy(net1)
-
+modCC <- cluster_louvain(netCC)
 
 # delete non connected literature
-# net2 <- delete_vertices(net1, degree(net1) == 0)
-net2 <- delete_vertices(net1, components(net1)$membership != 1)
+# not needed anymore
+# netCC <- delete_vertices(netCC, degree(netCC) == 0)
+netCC2 <- delete_vertices(netCC, components(netCC)$membership != 1)
+# table(components(netCC)$membership)
 
 # modularity
-mod2 <- cluster_fast_greedy(net2)
-clu2 <- membership(mod2)
-sclu2 <- ifelse(clu2 <= (sum(table(clu2) > 1)), clu2, "isolated")
-sclu2 <- as.factor(sclu2)
-cclu <- colorspace::qualitative_hcl(n = nlevels(sclu2), palette = "Dark 3")
-cclu[levels(sclu2) == "isolated"] <- "#808080" # grey
-col2 <- cclu[sclu2]
-
-deg2 <- degree(net2)
+modCC2 <- cluster_louvain(netCC2)
+cluCC2 <- membership(modCC2)
+# group isolated modules
+# scluCC <- ifelse(cluCC <= (sum(table(cluCC2) > 1)), cluCC, "isolated")
+# add 0 for nicer sorting
+add0 <- cluCC2 < 10
+cluCC2[add0] <- paste0("0", cluCC2[add0])
+cluCC2 <- as.factor(cluCC2)
+# attribute colors
+palCC2 <- colorspace::qualitative_hcl(n = nlevels(cluCC2), palette = "Dark 3")
+colCC2 <- palCC2[cluCC2]
 ```
 
-The network has ```r vcount(net1)``` nodes (one node = one article), and ```r scales::comma(ecount(net1))``` edges (one edge = shared references between two articles). The connectance is ```r round(edge_density(netPR, loops = FALSE),3)``` and the modularity ```r round(modularity(modPR),2)```
+The network has ```r vcount(netCC)``` nodes (one node = one article), and ```r scales::comma(ecount(netCC), big.mark = " ")``` edges (one edge = shared references between two articles). The connectance is ```r round(edge_density(netCC, loops = FALSE),3)``` and the modularity ```r round(modularity(modCC),2)```.   
 
+For visual representation, we only keep the largest connected community of articles (we removed the disconnected articles, N=```r sum(components(netCC)$membership != 1)```).
 
-For visual representation, we only keep the largest connected community of articles (we removed the disconnected articles).
 ```{r}
 #| label: fig-ref
 #| fig-cap: "Largest connected community of the coupling network. Nodes are articles and edges represent the shared cited references. The colors represent the modules of the coupling network."
 
-# V(net1)$size <- sqrt(degree(net1))
-# V(netREF)$label <- ref$Short[match(V(net1)$name, ref$Short)]
-# V(netREF)$year <- ref$Year[match(V(netREF)$name, ref$DOI)]
-# V(netREF)$faut <- ref$FAut[match(V(netREF)$name, ref$DOI)]
-# V(netREF)$fulltitle <- ref$Title[match(V(netREF)$name, ref$DOI)]
-# V(netREF)$shorttitle <- substr(V(netREF)$fulltitle, 1, 25)
-
-V(net2)$title <- paste(
-  V(net2)$name,
-  M$shortjournal[match(V(net2)$name, M$shortname)],
-  M$shorttitle[match(V(net2)$name, M$shortname)],
-  M$project[match(V(net2)$name, M$shortname)],
+V(netCC2)$title <- paste(
+  V(netCC2)$name,
+  M$shortjournal[match(V(netCC2)$name, M$shortname)],
+  M$breaktitle[match(V(netCC2)$name, M$shortname)],
+  M$linkDOI[match(V(netCC2)$name, M$shortname)],
+  M$project[match(V(netCC2)$name, M$shortname)],
   sep = "<br>"
 )
-V(net2)$group <- membership(mod2)
-V(net2)$color <- col2
+V(netCC2)$group <- cluCC2
+V(netCC2)$color <- colCC2
 
 # check out other layout
 visNetwork::visIgraph(
-  net2,
+  netCC2,
   layout = "layout_with_fr",
   idToLabel = FALSE,
   randomSeed = 25,
@@ -447,20 +450,20 @@ visNetwork::visIgraph(
 ```
 
 
-### Article centrality
+#### Article centrality
 
 ```{r}
 #| label: fig-cenref
-#| fig-cap: "Reference centrality based on citation coupling. The size of the dot corresponds to the degree (number of connections), its colors corresponds to the modules. "
-centR <- data.frame(
-  "betweenness" = betweenness(net2),
-  "degree" = degree(net2),
-  "pagerank" = page_rank(net2)$vector,
-  "color" = V(net2)$color,
-  "lab" = V(net2)$title
+#| fig-cap: "Article centrality based on citation coupling. The size of the dot corresponds to the degree (number of connections), its colors corresponds to the modules. "
+centR2 <- data.frame(
+  "betweenness" = betweenness(netCC2),
+  "degree" = degree(netCC2),
+  "pagerank" = page_rank(netCC2)$vector,
+  "color" = V(netCC2)$color,
+  "lab" = V(netCC2)$title
 )
 
-plot_ly(centR) |>
+plot_ly(centR2) |>
   add_markers(
     x = ~betweenness,
     y = ~pagerank,
@@ -469,7 +472,7 @@ plot_ly(centR) |>
     text = ~lab,
     hoverinfo = "text"
   ) |>
-  layout(title = "Reference centrality") |>
+  layout(title = "Article centrality") |>
   config(
     modeBarButtons = list(list("toImage")),
     displaylogo = FALSE
@@ -478,24 +481,108 @@ plot_ly(centR) |>
 
 ```{r}
 #| label: tbl-cenref
-#| tbl-cap: "Reference centrality based on citation coupling. The degree is the number of connections to other references, the Google PageRank measures the influence based on the number and the importance of connected references and the betweenness is the number of shortest paths going through a reference."
-#| 
-info <- apply(centR[, 1:3], 2, round, 5)
-score <- apply(scale(sqrt(info)), 1, mean)
-info <- as.data.frame(info)
+#| tbl-cap: "Article centrality based on citation coupling. The degree is the number of connections to other articles, the Google PageRank measures the influence based on the number and the importance of connected references and the betweenness is the number of shortest paths going through a reference."
 
-info$shortjournal <- M$shortjournal[match(row.names(info), M$shortname)]
-info$shorttitle <- M$shorttitle[match(row.names(info), M$shortname)]
-info$project <- M$project[match(row.names(info), M$shortname)]
-DT::datatable(info[order(score, decreasing = TRUE), ])
+# compute centrality on all references
+centR <- data.frame(
+  "betweenness" = round(betweenness(netCC), 1),
+  "degree" = round(degree(netCC), 1),
+  "pagerank" = round(page_rank(netCC)$vector, 5)
+)
+
+score <- apply(scale(sqrt(centR)), 1, mean)
+centR <- as.data.frame(centR)
+
+centR$journal <- M$shortjournal[match(row.names(centR), M$shortname)]
+# centR$title <- M$breaktitle[match(row.names(centR), M$shortname)]
+centR$project <- M$project[match(row.names(centR), M$shortname)]
+centR$DOI <- M$linkDOI[match(row.names(centR), M$shortname)]
+DT::datatable(centR[order(score, decreasing = TRUE), ], escape = FALSE)
+```
+
+
+#### Centrality per project
+
+Each article is attached to one or multiple projects. We can use this link to calculate the average article centrality per project.
+
+```{r}
+#| label: fig-cenrefpro
+#| fig-cap: "Average article centrality per project. The size of the dot corresponds to the number of articles per project. "
+#| 
+
+pp <- strsplit(centR$project, ", ")
+# data frame per reference
+infoR <- data.frame(
+  "project" = unlist(pp),
+  "betweenness" = rep(centR$betweenness, sapply(pp, length)),
+  "degree" = rep(centR$degree, sapply(pp, length)),
+  "pagerank" = rep(centR$pagerank, sapply(pp, length))
+)
+
+# statistics per project
+infoP <- data.frame(
+  "project" = sort(unique(infoR$project)),
+  "betweenness" = round(tapply(infoR$betweenness, infoR$project, mean), 1),
+  "betweenness_sd" = tapply(infoR$betweenness, infoR$project, sd),
+  "degree" = round(tapply(infoR$degree, infoR$project, mean), 1),
+  "pagerank" = round(tapply(infoR$pagerank, infoR$project, mean), 5),
+  "pagerank_sd" = tapply(infoR$pagerank, infoR$project, sd),
+  "N" = as.numeric(table(infoR$project))
+)
+# infoP$project[!infoP$project %in% cesab$group]
+infoP$year <- cesab$start_year[match(infoP$project, cesab$group)]
+infoP$lab <- paste(
+  infoP$project,
+  ifelse(is.na(infoP$year), "", infoP$year),
+  "<br>N ref =",
+  infoP$N
+)
+
+plot_ly(
+  infoP,
+  x = ~betweenness,
+  y = ~pagerank,
+  # color = ~project,
+  size = ~N,
+  # marker = list(color = ~project, line = list(color = ~project)),
+  text = ~lab,
+  hoverinfo = "text",
+  type = "scatter",
+  mode = "markers",
+  # error_x = ~ list(array = betweenness_sd),
+  # error_y = ~ list(array = pagerank_sd),
+  showlegend = FALSE
+) |>
+  layout(title = "Average article centrality per project") |>
+  config(
+    modeBarButtons = list(list("toImage")),
+    displaylogo = FALSE
+  )
+```
+
+```{r}
+#| label: tbl-cenrefpro
+#| tbl-cap: "Average reference centrality per project. The degree is the number of shared references, the Google PageRank measures the influence based on the number and the importance of connected references and the betweenness is the number of shortest paths going through a reference."
+#| 
+info <- infoP[, c("project", "year", "N", "degree", "pagerank", "betweenness")]
+score <- apply(
+  scale(sqrt(infoP[, c("degree", "pagerank", "betweenness")])),
+  1,
+  mean
+)
+
+DT::datatable(
+  info[order(score, decreasing = TRUE), ],
+  escape = FALSE,
+  rownames = FALSE
+)
 ```
 
 
 ## Conclusion
 
-- already some cool networks that provide a good overview of CESAB's projects  
+- already some cool networks analysis that provide a good overview of CESAB's projects  
 
-*Exploration to be completed:*  
+*Exploration to be completed...*  
 
-- quantify diversity of scientific productions per project
 

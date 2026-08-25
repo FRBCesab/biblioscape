@@ -41,3 +41,36 @@ noempty <- function(x) {
   }
   return(x)
 }
+
+
+breaks_string <- function(x, each = 50, linemax = 3) {
+  S <- strsplit(x, " ")
+  return(sapply(S, add_br, each = each, linemax = linemax))
+}
+
+add_br <- function(s, each = 50, linemax = 3) {
+  cs <- cumsum(nchar(s))
+
+  if (max(cs) < each) {
+    out <- paste(s, collapse = " ")
+  } else {
+    nbr <- ifelse(max(cs) > 2 * each, 3, 2)
+    th1 <- max(cs) / nbr
+    if (nbr == 2) {
+      out <- paste(
+        paste(s[cs <= th1], collapse = " "),
+        paste(s[cs > th1], collapse = " "),
+        sep = "<br>"
+      )
+    } else {
+      th2 <- 2 * max(cs) / nbr
+      out <- paste(
+        paste(s[cs <= th1], collapse = " "),
+        paste(s[cs > th1 & cs <= th2], collapse = " "),
+        paste(s[cs > th2], collapse = " "),
+        sep = "<br>"
+      )
+    }
+  }
+  return(out)
+}

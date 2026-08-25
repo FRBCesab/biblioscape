@@ -35,7 +35,7 @@ quarto::quarto_render("analysis/03_explore_bibliometrix.qmd")
 quarto::quarto_render("analysis/04a_explore_mte_members.qmd")
 ```
 
-- explore [FRB-MTE-OFB citation  network](https://frbcesab.github.io/biblioscape/analysis/04b_explore_mte_citations.html)  
+- explore [FRB-MTE-OFB citation network](https://frbcesab.github.io/biblioscape/analysis/04b_explore_mte_citations.html)  
 ```r
 quarto::quarto_render("analysis/04b_explore_mte_citations.qmd")
 ```
