@@ -60,14 +60,6 @@ nproj <- table(table(cesab$name))
 # citation dataset
 M <- readRDS(file.path(out_data, "cesab_bibliometrix.rds"))
 
-conv <- data.frame(
-  "ori" = sort(unique(M$SO))
-)
-conv$abb <- sapply(firstup(conv$ori), abbrevr::AbbrevTitle, USE.NAMES = FALSE)
-# conv <- conv[!duplicated(conv), ]
-mconv <- match(tolower(M$SO), tolower(conv$ori))
-
-M$shortjournal <- conv$abb[match(M$SO, conv$ori)]
 M$shorttitle <- substr(firstup(M$display_name), 1, 30)
 M$breaktitle <- breaks_string(firstup(M$display_name))
 M$linkDOI <- paste0(
@@ -77,11 +69,6 @@ M$linkDOI <- paste0(
   M$DI,
   "</a>"
 )
-
-M$project <- gsub("PPR Oceans", "PPR Océans", M$project)
-# keep only references in CESAB group (or in Core)
-# remove Desybel
-M <- M[!M$project %in% "Desybel", ]
 ```
 
 
@@ -449,6 +436,72 @@ visNetwork::visIgraph(
   )
 ```
 
+
+#### Temporal dynamic
+
+::: {.panel-tabset}
+## network
+```{r}
+#| label: fig-netyref
+#| fig-cap: "Coupling network of shared references represented per publishing year (in x-axis) and per module (in y-axis and in different colors). Nodes are articles and edges represent the shared cited references."
+#| 
+
+# x-axis by year
+vyr <- M$PY[match(V(netCC2)$name, M$shortname)]
+V(netCC2)$year <- vyr
+xnod <- (vyr - min(vyr)) / (max(vyr) - min(vyr)) * 2 - 1
+
+# take the membership as y-axis
+ymod <- as.numeric(as.factor(cluCC2))
+ynod <- (ymod / max(ymod)) * 2 - 1
+# or take the first MDS dimension
+# ynod <- layout_with_mds(netMEM)[, 1]
+
+# coordinates
+coo <- cbind(jitter(xnod, 1.5), jitter(ynod, 3))
+
+# plot(netMEM, layout = coo)
+
+visNetwork::visIgraph(
+  netCC2,
+  layout = 'layout.norm',
+  layoutMatrix = coo,
+  randomSeed = 54,
+  type = "full"
+) |>
+  visOptions(
+    highlightNearest = TRUE,
+    selectedBy = list(variable = "year", multiple = T)
+  )
+```
+
+## barplot
+```{r}
+#| label: fig-baryref
+#| fig-cap: "Number of references per year and per module."
+#| 
+
+year_mod <- table(cluCC2, vyr) |> as.data.frame()
+names(year_mod) <- c("module", "year", "count")
+
+plot_ly(
+  year_mod,
+  x = ~year,
+  y = ~count,
+  color = ~module,
+  colors = palCC2,
+  type = 'bar'
+) |>
+  layout(
+    barmode = "stack",
+    xaxis = list(title = "Year"),
+    yaxis = list(title = "Count"),
+    legend = list(title = list(text = "Module")),
+    hovermode = "x unified"
+  )
+```
+
+::: 
 
 #### Article centrality
 

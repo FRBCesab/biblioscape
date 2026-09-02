@@ -135,6 +135,13 @@ df <- cbind(col_df, art_df[m0, -1])
 # simplify DOI with lower case
 df$DOI <- tolower(df$DOI)
 
+
+# clean-up project names
+# table(df$folder)
+df$folder <- gsub("PPR Oceans", "PPR Océans", df$folder)
+# keep only references in CESAB group (or in Core)
+# remove Desybel
+df <- df[!df$folder %in% "Desybel", ]
 # table(df$item_id != "" & is.na(df$item_title))
 # View(df)
 
@@ -184,5 +191,58 @@ projdoi <- tapply(df$folder, df$DOI, paste, collapse = ", ")
 M$project <- projdoi[match(M$DI, names(projdoi))]
 # table(M$project)
 
+# add journal abbreviation
+# remotes::install_github("patrickbarks/abbrevr")
+# library(abbrevr)
+conv <- data.frame(
+  "ori" = sort(unique(M$SO))
+)
+conv$abb <- sapply(firstup(conv$ori), abbrevr::AbbrevTitle, USE.NAMES = FALSE)
+# conv <- conv[!duplicated(conv), ]
+mconv <- match(tolower(M$SO), tolower(conv$ori))
+
+M$shortjournal <- conv$abb[match(M$SO, conv$ori)]
+
+
 # export
 saveRDS(M, file.path(out_data, "cesab_bibliometrix.rds"))
+
+# 4.(extra) Look-up for all citations in OA -----------------
+# not working properly yet
+# missing the citations in oa
+# needs oa_snowball()
+#
+# oa[[1]]$cited_by_count
+# oa[[1]]$referenced_works
+# oa[[1]]$related_works
+# = length(strsplit(M$CR[1], "; ")[[1]])
+
+## openalexR::oa_snowball doesn't work ...
+idlist <- sapply(oa, function(x) gsub("https://openalex.org/", "", x$id))
+# df <- read.csv(file.path(out_data, "cesab_zotero.csv"))
+# doilist <- df$DOI[!is.na(df$DOI) & df$DOI != ""]
+#
+# snow_1 <- openalexR::oa_snowball(
+#   identifier = oa[[1]]$id
+# )
+#
+# snow_2 <- openalexR::oa_snowball(doi = doilist)
+# with idlist or with doilist
+#   6.     └─openalexR (local) `<fn>`(...)
+#   7.       └─openalexR::oa_request(...)
+#   8.         └─openalexR:::api_request(...)
+#   9.           └─jsonlite::fromJSON(m, simplifyVector = FALSE)
+#  10.             └─jsonlite:::stop("Argument 'txt' must be a JSON string, URL or file.")
+
+# snowball <- openalexR::oa_snowball(identifier = idlist[ncite > 0])
+
+# citing_works <- openalexR::oa_fetch(
+#   entity = "works",
+#   cites = idlist[ncite > 0]
+# )
+# ncite <- sapply(oa, function(x) x$cited_by_count)
+# # Error:
+# # ! Argument 'txt' must be a JSON string, URL or file.
+
+# # save output
+# save(snowball, file = file.path(out_data, "cesab_snowball_openalex.rdata"))
