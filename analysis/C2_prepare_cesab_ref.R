@@ -167,7 +167,7 @@ oa <- openalexR::oa_fetch(
 save(oa, file = file.path(out_data, "cesab_openalex.rdata"))
 
 
-# 3. Fprmat as bibliometrix object -----------------
+# 3. Format as bibliometrix object -----------------
 oadata <- file.path(out_data, "cesab_openalex.rdata")
 
 M <- bibliometrix::convert2df(

@@ -1,3 +1,13 @@
+# Script to clean membership from FRB-MTE-OFB projects
+#
+# input:
+#   raw-data/mte/FRB-MTE-OFB_Members.xlsx
+#   raw-data/mte/CESAB_MTE_Members.xlsx
+#     from FRB-Sharepoint and Coline's Onedrive
+# output:
+#   derived-data/mte_members.csv : simplified membership dataset
+#
+
 # Load functions and needed package
 devtools::load_all()
 
