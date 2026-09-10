@@ -2,15 +2,17 @@
 
 Exploration with FRB-MTE-OFB dataset: 
 
-1. [Exploration of bibliometrix output](https://frbcesab.github.io/biblioscape/analysis/03_explore_bibliometrix.html)  
+1. [Exploration of bibliometrix output](https://frbcesab.github.io/biblioscape/analysis/M3_explore_bibliometrix.html)  
 
-2. [Exploration of membership network](https://frbcesab.github.io/biblioscape/analysis/04a_explore_mte_members.html)
+2. [Exploration of membership network](https://frbcesab.github.io/biblioscape/analysis/M4_explore_mte_members.html)
 
-3. [Exploration of citation network](https://frbcesab.github.io/biblioscape/analysis/04b_explore_mte_citations.html)
+3. [Exploration of citation network](https://frbcesab.github.io/biblioscape/analysis/M5_explore_mte_citations.html)
 
-4. [Exploration of bibliographic coupling](https://frbcesab.github.io/biblioscape/analysis/04c_explore_mte_coupling.html)
+4. [Exploration of bibliographic coupling](https://frbcesab.github.io/biblioscape/analysis/M6_explore_mte_coupling.html)
 
 
 Exploration with CESAB dataset:    
 
 5. [Exploration of CESAB networks](https://frbcesab.github.io/biblioscape/analysis/C3_explore_cesab.html)    
+
+6. [Exploration of CESAB keywords and language](https://frbcesab.github.io/biblioscape/analysis/C4_explore_keywords.html)  

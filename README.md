@@ -7,48 +7,45 @@ Research compendium for visualizing the scientific landscape through bibliograph
 
 The first case study uses [FRB-MTE-OFB projects](https://www.fondationbiodiversite.fr/la-frb-en-action/programmes-et-projets/impacts-sur-la-biodiversite-terrestre-dans-lanthropocene/):  
 
-- clean references and get their DOI when missing
 
-``` r
-source("analysis/01a_clean_references.R")
-```
 
 - clean membership spellings
 
 ``` r
-source("analysis/01b_clean_members.R")
+source("analysis/M1_clean_mte_members.R")
 ```
 
-- fetch records from [openalex database](https://openalex.org/)
+- clean references, get their DOI when missing and fetch records from [openalex database](https://openalex.org/)
 
 ``` r
-source("analysis/02_fetch_openalex.R")
+source("analysis/M2_prepare_mte_references.R")
 ```
 
-- explore [bibliometrix R package](https://frbcesab.github.io/biblioscape/analysis/03_explore_bibliometrix.html)
+- explore [bibliometrix R package](https://frbcesab.github.io/biblioscape/analysis/M3_explore_bibliometrix.html)
 ```r
-quarto::quarto_render("analysis/03_explore_bibliometrix.qmd")
+quarto::quarto_render("analysis/M3_explore_bibliometrix.qmd")
 ```
 
-- explore [FRB-MTE-OFB membership network](https://frbcesab.github.io/biblioscape/analysis/04a_explore_mte_members.html)
+- explore [FRB-MTE-OFB membership network](https://frbcesab.github.io/biblioscape/analysis/M4_explore_mte_members.html)
 ```r
-quarto::quarto_render("analysis/04a_explore_mte_members.qmd")
+quarto::quarto_render("analysis/M4_explore_mte_members.qmd")
 ```
 
-- explore [FRB-MTE-OFB citation network](https://frbcesab.github.io/biblioscape/analysis/04b_explore_mte_citations.html)  
+- explore [FRB-MTE-OFB citation network](https://frbcesab.github.io/biblioscape/analysis/M5_explore_mte_citations.html)  
 ```r
-quarto::quarto_render("analysis/04b_explore_mte_citations.qmd")
+quarto::quarto_render("analysis/M5_explore_mte_citations.qmd")
 ```
 
-- explore [FRB-MTE-OFB bibliographic coupling](https://frbcesab.github.io/biblioscape/analysis/04c_explore_mte_coupling.html)  
+- explore [FRB-MTE-OFB bibliographic coupling](https://frbcesab.github.io/biblioscape/analysis/M6_explore_mte_coupling.html)  
 ```r
-quarto::quarto_render("analysis/04c_explore_mte_coupling.qmd")
+quarto::quarto_render("analysis/M6_explore_mte_coupling.qmd")
 ```
 
 
 ### FRB-CESAB projects
 
 The second case study uses [FRB CESAB projects](https://www.fondationbiodiversite.fr/en/about-the-foundation/le-cesab/):   
+
 
 1. clean group membership data
 
@@ -67,6 +64,10 @@ source("analysis/C2_prepare_cesab_ref.R")
 quarto::quarto_render("analysis/C3_explore_cesab.qmd")
 ```
 
+4. explore [CESAB keywords and language](https://frbcesab.github.io/biblioscape/analysis/C4_explore_keywords.html)    
+```r
+quarto::quarto_render("analysis/C4_explore_keywords.qmd")
+```
 
 
 ### Online index
@@ -89,6 +90,7 @@ quarto::quarto_render("index.qmd")
 - Aria, M. & Cuccurullo, C. (2026). Science Mapping Analysis: A Primer with Biblioshiny, McGraw-Hill Education. ISBN: 978-88-386-2297-7.
 
 - Csardi G, Nepusz T (2006). “The igraph software package for complex network research.” InterJournal, Complex Systems, 1695. https://igraph.org.  
+
 
 ### Tutorial on network analysis
 
