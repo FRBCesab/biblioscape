@@ -52,7 +52,7 @@ meta <- readxl::read_xlsx(
   here::here("data", "raw-data", "mte", "Projets_FRB-MTECT-OFB.xlsx")
 )
 
-ndoi <- table(table(ref$DOI))
+
 
 # complete the references with author names
 load(

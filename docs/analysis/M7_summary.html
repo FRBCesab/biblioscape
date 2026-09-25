@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.36">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Romain Frelat">
+<meta name="dcterms.date" content="2026-09-25">
+
+<title>Analyse réseau des projet FRB-MTE-OFB</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-845c23b38eaddc0f92fda52bfe77a8c8.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-577706a10f52ffd9dd393f4456e9d04a.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<link href="../site_libs/htmltools-fill-0.5.9/fill.css" rel="stylesheet">
+<script src="../site_libs/htmlwidgets-1.6.4/htmlwidgets.js"></script>
+<link href="../site_libs/vis-9.1.0/vis-network.min.css" rel="stylesheet">
+<script src="../site_libs/vis-9.1.0/vis-network.min.js"></script>
+<script src="../site_libs/visNetwork-binding-2.1.4/visNetwork.js"></script>
+
+
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-search-results"></div>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#résumé" id="toc-résumé" class="nav-link active" data-scroll-target="#résumé">Résumé</a></li>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link" data-scroll-target="#introduction">Introduction</a></li>
+  <li><a href="#réseau-de-collaborations" id="toc-réseau-de-collaborations" class="nav-link" data-scroll-target="#réseau-de-collaborations">Réseau de collaborations</a></li>
+  <li><a href="#réseau-de-citations" id="toc-réseau-de-citations" class="nav-link" data-scroll-target="#réseau-de-citations">Réseau de citations</a></li>
+  <li><a href="#proximité-des-projets" id="toc-proximité-des-projets" class="nav-link" data-scroll-target="#proximité-des-projets">Proximité des projets</a></li>
+  <li><a href="#conclusion" id="toc-conclusion" class="nav-link" data-scroll-target="#conclusion">Conclusion</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Analyse réseau des projet FRB-MTE-OFB</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Romain Frelat </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">September 25, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="résumé" class="level1">
+<h1>Résumé</h1>
+<p>Il est difficile d’appréhender la diversité des projets financé par le programme FRB-MTE-OFB. Les analyses de réseaux permettent de mettre en avant les relations entre les projets, en considérant leur membres actifs mais aussi la littérature scientifique auquel les projets se réfèrent. Les 24 projets financés ont un nombre assez important d’inter-relation avec 16 chercheurs collaborant au sein de plusieurs projets; et 72 publications scientifiques communes à au moins deux projets. Ces relations permettent d’identifier 4 groupes de projet fortement liés.</p>
+<p><em>+ intepretation des groupes</em></p>
+</section>
+<section id="introduction" class="level1">
+<h1>Introduction</h1>
+<p>Le <a href="https://www.fondationbiodiversite.fr/la-frb-en-action/programmes-et-projets/impacts-sur-la-biodiversite-terrestre-dans-lanthropocene/">programme FRB-MTE-OFB</a> a financé <code>24</code> projets de recherche pour travailler sur la caractérisation de l’impact des pressions induites par les activités humaines sur la biodiversité terrestre. Ces projets ont trois formats différent: <code>10</code> projets de <em>synthèse</em>, <code>10</code> projets <em>synergie</em>, et <code>4</code> projets de <em>revues systématiques</em>.</p>
+<p>Pour mieux comprendre les champs de recherche des projets sélectionnés, il est possible d’utiliser les relations entre projets mesurés par l’intermédiaire du nombre de chercheur en commun (#réseau-de-collaborations) ou du nombre de références en commun (#réseau-de-citations).</p>
+</section>
+<section id="réseau-de-collaborations" class="level1">
+<h1>Réseau de collaborations</h1>
+<p>Le réseau de collaborations est construit à partir de la liste des membres des projets. Au total, <code>227</code> chercheurs sont engagés dans les activités du programme. La majorité des scientifiques participe a un seul projet (N=<code>211</code>), mais <code>14</code> scientifiques sont investis dans deux projets; et <code>2</code> scientifiques collaborent à trois projets du programme. Quand les projets partagent un ou plusieurs chercheurs, alors leurs thématiques doit être assez proche. Plus d’explorations sur les réseaux de collaboration <a href="https://frbcesab.github.io/biblioscape/analysis/M4_explore_mte_members.html">ici</a>.</p>
+<div class="cell">
+<div id="fig-bicolab" class="cell-output-display quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-bicolab-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="visNetwork html-widget html-fill-item" id="htmlwidget-4331103e98d5aa4c9746" style="width:100%;height:464px;"></div>
+<script type="application/json" data-for="htmlwidget-4331103e98d5aa4c9746">{"x":{"nodes":{"id":["Bowler Diana","Calvet Coralie","Cordeau Stephane","Devictor Vincent","Ernoult Aude","Fontaine Colin","Gasc Amandine","Hedde Mickael","Mony Cendrine","Pelosi Celine","Petit Sandrine","Porcher Emmanuelle","Reyjol Yorick","Rigal Stanislas","Sordello Romain","Violle Cyrille","Comepi","Impacts","Funbiodiv","Fragshifts","Interface","Acoucene","Landbio","Fellow","Tres-pratic","Carapat","Rodexpo","Motiver","Spatman","Beyonds","Dragon","Discar","Ebenn","Pppirec","Landworm","Indicators","Desybel","Elan","Funindic","Solaire-pb"],"type":[false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true],"color":["lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","orange","orange","orange","orange","orange","orange","orange","orange","orange","orange","orange","orange","orange","orange","orange","orange","orange","orange","orange","orange","orange","orange","orange","orange"],"shapecat":["MEMBER","MEMBER","MEMBER","MEMBER","MEMBER","MEMBER","MEMBER","MEMBER","MEMBER","MEMBER","MEMBER","MEMBER","MEMBER","MEMBER","MEMBER","MEMBER","SYNERGIE","SYNTHESE","SYNTHESE","SYNERGIE","SYNERGIE","SYNTHESE","SYNERGIE","SYNTHESE","REVUE SYSTEMATIQUE","SYNERGIE","SYNERGIE","SYNTHESE","SYNTHESE","SYNTHESE","SYNTHESE","SYNTHESE","REVUE SYSTEMATIQUE","SYNERGIE","SYNTHESE","SYNERGIE","REVUE SYSTEMATIQUE","SYNERGIE","SYNERGIE","REVUE SYSTEMATIQUE"],"shape":["dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","diamond","hexagon","hexagon","diamond","diamond","hexagon","diamond","hexagon","triangle","diamond","diamond","hexagon","hexagon","hexagon","hexagon","hexagon","triangle","diamond","hexagon","diamond","triangle","diamond","diamond","triangle"],"title":["Bowler Diana<br>Dragon<br>Impacts","Calvet Coralie<br>Beyonds<br>Elan","Cordeau Stephane<br>Fellow<br>Funbiodiv","Devictor Vincent<br>Beyonds<br>Elan","Ernoult Aude<br>Indicators<br>Interface","Fontaine Colin<br>Dragon<br>Pppirec","Gasc Amandine<br>Acoucene<br>Desybel","Hedde Mickael<br>Impacts<br>Landworm<br>Tres-pratic","Mony Cendrine<br>Indicators<br>Landbio","Pelosi Celine<br>Landworm<br>Motiver","Petit Sandrine<br>Funbiodiv<br>Motiver","Porcher Emmanuelle<br>Impacts<br>Pppirec","Reyjol Yorick<br>Desybel<br>Ebenn<br>Solaire-pb","Rigal Stanislas<br>Beyonds<br>Elan","Sordello Romain<br>Desybel<br>Solaire-pb","Violle Cyrille<br>Impacts<br>Funindic","Comepi<br>SYNERGIE<br>2022","Impacts<br>SYNTHESE<br>2021","Funbiodiv<br>SYNTHESE<br>2023","Fragshifts<br>SYNERGIE<br>2023","Interface<br>SYNERGIE<br>2021","Acoucene<br>SYNTHESE<br>2021","Landbio<br>SYNERGIE<br>2021","Fellow<br>SYNTHESE<br>2023","Tres-pratic<br>REVUE SYSTEMATIQUE<br>2022","Carapat<br>SYNERGIE<br>2023","Rodexpo<br>SYNERGIE<br>2022","Motiver<br>SYNTHESE<br>2022","Spatman<br>SYNTHESE<br>2021","Beyonds<br>SYNTHESE<br>2023","Dragon<br>SYNTHESE<br>2022","Discar<br>SYNTHESE<br>2022","Ebenn<br>REVUE SYSTEMATIQUE<br>2023","Pppirec<br>SYNERGIE<br>2022","Landworm<br>SYNTHESE<br>2021","Indicators<br>SYNERGIE<br>2022","Desybel<br>REVUE SYSTEMATIQUE<br>2022","Elan<br>SYNERGIE<br>2023","Funindic<br>SYNERGIE<br>2021","Solaire-pb<br>REVUE SYSTEMATIQUE<br>2021"],"label":["Bowler Diana","Calvet Coralie","Cordeau Stephane","Devictor Vincent","Ernoult Aude","Fontaine Colin","Gasc Amandine","Hedde Mickael","Mony Cendrine","Pelosi Celine","Petit Sandrine","Porcher Emmanuelle","Reyjol Yorick","Rigal Stanislas","Sordello Romain","Violle Cyrille","Comepi","Impacts","Funbiodiv","Fragshifts","Interface","Acoucene","Landbio","Fellow","Tres-pratic","Carapat","Rodexpo","Motiver","Spatman","Beyonds","Dragon","Discar","Ebenn","Pppirec","Landworm","Indicators","Desybel","Elan","Funindic","Solaire-pb"],"x":[0.9560426156789659,-0.6256933620099565,-0.1836414067294916,-0.6908608010546573,-0.2470300149621211,0.8848194301178194,-0.08664443325571247,0.7831747413749917,-0.6638739173481908,0.5737491944981883,0.2102250362405191,0.6619881211332046,0.3015393413471756,-0.4561117908081948,0.316284294673145,0.5059202729782644,0.02044318309020232,0.7466681314764974,0.01663788664350285,-0.9990541191749009,-0.04892219641706619,-0.2633547302330497,-0.8551095758656069,-0.3706767105139503,0.9750710142246239,-1,-0.2045962630943927,0.4035534429995615,-0.7017025317296595,-0.5123052135177004,1,-0.6373756271486781,0.2735347587189616,0.6951365014571274,0.6859549994957646,-0.4571318485159016,0.1334017714102813,-0.6752383512557895,0.3018827512593301,0.4727928781867665],"y":[0.02860471063335202,0.7437656327114606,-1,0.3811191427635718,-0.4811954055824106,0.4675713133939583,0.9049947233611133,-0.4107048738374498,-0.4583015558438891,-0.8249840903661765,-0.9679073919706432,0.1311548123919621,0.7233222869041076,0.411239760302148,1,-0.1836139521824376,0.2240597326470648,-0.1251500673462966,-0.9983659116924236,-0.1400864540312791,-0.4856395139808538,0.9779638458517872,-0.4509334959811976,-0.9787138944766903,-0.4725774158247347,0.190097168858363,-0.02143794779599473,-0.9338054228528888,-0.8297420384881251,0.5695972530112599,0.2697673916817112,-0.04154878567590403,0.5112677761642495,0.3765068037478119,-0.6433147748328343,-0.4807075178768554,0.885408788812674,0.543457359806663,-0.2297505179517572,0.8640119270332658]},"edges":{"from":["Bowler Diana","Bowler Diana","Calvet Coralie","Calvet Coralie","Cordeau Stephane","Cordeau Stephane","Devictor Vincent","Devictor Vincent","Ernoult Aude","Ernoult Aude","Fontaine Colin","Fontaine Colin","Gasc Amandine","Gasc Amandine","Hedde Mickael","Hedde Mickael","Hedde Mickael","Mony Cendrine","Mony Cendrine","Pelosi Celine","Pelosi Celine","Petit Sandrine","Petit Sandrine","Porcher Emmanuelle","Porcher Emmanuelle","Reyjol Yorick","Reyjol Yorick","Reyjol Yorick","Rigal Stanislas","Rigal Stanislas","Sordello Romain","Sordello Romain","Violle Cyrille","Violle Cyrille"],"to":["Dragon","Impacts","Beyonds","Elan","Fellow","Funbiodiv","Beyonds","Elan","Indicators","Interface","Dragon","Pppirec","Acoucene","Desybel","Impacts","Landworm","Tres-pratic","Indicators","Landbio","Landworm","Motiver","Funbiodiv","Motiver","Impacts","Pppirec","Desybel","Ebenn","Solaire-pb","Beyonds","Elan","Desybel","Solaire-pb","Impacts","Funindic"]},"nodesToDataframe":true,"edgesToDataframe":true,"options":{"width":"100%","height":"100%","nodes":{"shape":"dot","physics":false},"manipulation":{"enabled":false},"edges":{"smooth":true,"arrows":"to"},"physics":{"stabilization":false}},"groups":null,"width":null,"height":null,"idselection":{"enabled":false,"style":"width: 150px; height: 26px","useLabels":true,"main":"Select by id"},"byselection":{"enabled":false,"style":"width: 150px; height: 26px","multiple":false,"hideColor":"rgba(200,200,200,0.5)","highlight":false},"main":null,"submain":null,"footer":null,"background":"rgba(0, 0, 0, 0)","igraphlayout":{"type":"square"},"highlight":{"enabled":true,"hoverNearest":false,"degree":1,"algorithm":"all","hideColor":"rgba(200,200,200,0.5)","labelOnly":true},"collapse":{"enabled":false,"fit":false,"resetHighlight":true,"clusterOptions":null,"keepCoord":true,"labelSuffix":"(cluster)"}},"evals":[],"jsHooks":[]}</script>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-bicolab-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Réseau simplifié avec les projets (en orange) et les membres (en bleu) qui ont participé à plusieurs projets. Le type de projet est représenté par la forme du nœud: triangle pour les revues systématiques, losange pour les synergies et hexagone pour les synthèses.
+</figcaption>
+</figure>
+</div>
+</div>
+<!--
+montrer la chronologie? Pas très intéressant pour 3 années
+-->
+</section>
+<section id="réseau-de-citations" class="level1">
+<h1>Réseau de citations</h1>
+<p>Pour mesurer la similarité des sujets scientifiques, il est aussi possible d’utiliser les citations utilisés par les chercheurs lors de l’appel à projet. Si les projets utilisent les mêmes références, alors ils sont certainement liés par une même méthode ou un même sujet d’étude.</p>
+<p>Chaque projet a cité entre <code>10</code> et <code>108</code> références dans la description de leur projet (<em>proposal</em>). Le format des <em>proposal</em> dépend du type de projet, avec une description plus complète pour les projets de <em>Synthese</em> comparée au projets <em>Synergie</em> ou au <em>Revues systématiques</em>.</p>
+<p>Au total, les <code>24</code> projets se sont construit sur <code>1123</code> références. La grande majorité de ces références n’est citée que par un projet (N=<code>966</code>), mais <code>72</code> publications sont cités par au moins deux projets. Quand les projets partagent une ou plusieurs références, alors leur thématiques doit être assez proche. Plus d’exploration sur les réseaux de collaboration <a href="https://frbcesab.github.io/biblioscape/analysis/M5_explore_mte_citations.html">ici</a></p>
+<div class="cell">
+<div id="fig-birefs" class="cell-output-display quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-birefs-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="visNetwork html-widget html-fill-item" id="htmlwidget-b40421b14b584108c2ee" style="width:100%;height:464px;"></div>
+<script type="application/json" data-for="htmlwidget-b40421b14b584108c2ee">{"x":{"nodes":{"id":["Bonfanti_2018","Pelosi_2014","Villemey_2018","Talluto_2017","Clauzel_2020","Clauzel_2021","Foltête_2020","Sahraoui_2017","Sirami_2019","Newbold_2015","Lafitte_2022","Ouédraogo_2021","Langridge_2021","Ouédraogo_2020_2","Sordello_2020","Langridge_2020","Ouédraogo_2020","Sordello_2019","Jeusset_2016","Duchenne_2022","Duchenne_2021","Olivier_2020_2","Deguines_2020","Martin_2019","Porcher_2022","Seibold_2019","Cardoso_2020","Barbaro_2021","Ricci_2019","Provost_2020","Karp_2018","Rusch_2018","Rusch_2021","Pelosi_2020","Pelosi_2021_2","Petit_2020","Bergerot_2022","Jeanneret_2021","Pelosi_2021","Outhwaite_2022","Ortiz_2021","Gérard_2025","Moretti_2017","Bloor_2021","Calderón‐sanou_2021","Joimel_2017","Phillips_2017","Denelle_2020","Violle_2017","Ernoult_2022","Martin_2019_4","Sueur_2015","Foltête_2012","Bagousse‐pinguet_2021","Lavorel_1997","Gaüzère_2021","Barnagaud_2019","Eichenberg_2021","Bowler_2021_2","Grenié_2017","Loiseau_2020","Bowler_2021","Isaac_2020","Cordeau_2019","Cordeau_2022","Petit_2021","Rigal_2023","Blaix_2023","Vaissière_2020","Guetté_2018","Olivier_2020","Cima_2020","Tres-pratic","Spatman","Solaire-pb","Rodexpo","Pppirec","Motiver","Landworm","Landbio","Interface","Indicators","Impacts","Funindic","Funbiodiv","Fragshifts","Fellow","Elan","Ebenn","Dragon","Discar","Desybel","Comepi","Carapat","Beyonds","Acoucene"],"type":[false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true],"color":["lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","lightblue","orange","orange","orange","orange","orange","orange","orange","orange","orange","orange","orange","orange","orange","orange","orange","orange","orange","orange","orange","orange","orange","orange","orange","orange"],"shapecat":["REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REFERENCE","REVUE SYSTEMATIQUE","SYNTHESE","REVUE SYSTEMATIQUE","SYNERGIE","SYNERGIE","SYNTHESE","SYNTHESE","SYNERGIE","SYNERGIE","SYNERGIE","SYNTHESE","SYNERGIE","SYNTHESE","SYNERGIE","SYNTHESE","SYNERGIE","REVUE SYSTEMATIQUE","SYNTHESE","SYNTHESE","REVUE SYSTEMATIQUE","SYNERGIE","SYNERGIE","SYNTHESE","SYNTHESE"],"shape":["dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","dot","triangle","hexagon","triangle","diamond","diamond","hexagon","hexagon","diamond","diamond","diamond","hexagon","diamond","hexagon","diamond","hexagon","diamond","triangle","hexagon","hexagon","triangle","diamond","diamond","hexagon","hexagon"],"label":["","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","Tres-pratic","Spatman","Solaire-pb","Rodexpo","Pppirec","Motiver","Landworm","Landbio","Interface","Indicators","Impacts","Funindic","Funbiodiv","Fragshifts","Fellow","Elan","Ebenn","Dragon","Discar","Desybel","Comepi","Carapat","Beyonds","Acoucene"],"title":["Bonfanti_2018<br>Funct. ecol.<br>Intraspecific body size variab<br><a href='https://www.doi.org/10.1111/1365-2435.13194'>10.1111/1365-2435.13194<\/a><br>Tres-pratic<br>Landworm<br>Impacts","Pelosi_2014<br>Agron. sustain. dev.<br>Pesticides and earthworms. a r<br><a href='https://www.doi.org/10.1007/s13593-013-0151-z'>10.1007/s13593-013-0151-z<\/a><br>Tres-pratic<br>Landworm","Villemey_2018<br>Environ. evid.<br>Can linear transportation infr<br><a href='https://www.doi.org/10.1186/s13750-018-0117-3'>10.1186/s13750-018-0117-3<\/a><br>Spatman<br>Solaire-pb<br>Elan<br>Dragon<br>Desybel","Talluto_2017<br>Nat. ecol. evol.<br>Extinction debt and colonizati<br><a href='https://www.doi.org/10.1038/s41559-017-0182'>10.1038/s41559-017-0182<\/a><br>Spatman<br>Impacts","Clauzel_2020<br>Biol. conserv.<br>Combining spatial modeling too<br><a href='https://www.doi.org/10.1016/j.biocon.2020.108713'>10.1016/j.biocon.2020.108713<\/a><br>Spatman<br>Interface","Clauzel_2021<br>Landsc. ecol.<br>Comparison of landscape graph <br><a href='https://www.doi.org/10.1007/s10980-020-01164-9'>10.1007/s10980-020-01164-9<\/a><br>Spatman<br>Interface","Foltête_2020<br>Landsc. ecol.<br>Coupling landscape graph model<br><a href='https://www.doi.org/10.1007/s10980-020-00998-7'>10.1007/s10980-020-00998-7<\/a><br>Spatman<br>Interface","Sahraoui_2017<br>Landsc. ecol.<br>A multi-species approach for a<br><a href='https://www.doi.org/10.1007/s10980-017-0551-6'>10.1007/s10980-017-0551-6<\/a><br>Spatman<br>Interface","Sirami_2019<br>Proc. natl. acad. sci.<br>Increasing crop heterogeneity <br><a href='https://www.doi.org/10.1073/pnas.1906419116'>10.1073/pnas.1906419116<\/a><br>Spatman<br>Impacts<br>Funbiodiv","Newbold_2015<br>Nature<br>Global effects of land use on <br><a href='https://www.doi.org/10.1038/nature14324'>10.1038/nature14324<\/a><br>Spatman<br>Beyonds","Lafitte_2022<br>Environ. evid.<br>What evidence exists regarding<br><a href='https://www.doi.org/10.1186/s13750-022-00291-x'>10.1186/s13750-022-00291-x<\/a><br>Solaire-pb<br>Ebenn","Ouédraogo_2021<br>Environ. evid.<br>Evidence on the impacts of che<br><a href='https://www.doi.org/10.1186/s13750-021-00237-9'>10.1186/s13750-021-00237-9<\/a><br>Solaire-pb<br>Desybel","Langridge_2021<br>Environ. evid.<br>Existing evidence on the outco<br><a href='https://www.doi.org/10.1186/s13750-021-00236-w'>10.1186/s13750-021-00236-w<\/a><br>Solaire-pb<br>Desybel","Ouédraogo_2020_2<br>Environ. evid.<br>What evidence exists on the im<br><a href='https://www.doi.org/10.1186/s13750-020-00203-x'>10.1186/s13750-020-00203-x<\/a><br>Solaire-pb<br>Desybel","Sordello_2020<br>Environ. evid.<br>Evidence of the impact of nois<br><a href='https://www.doi.org/10.1186/s13750-020-00202-y'>10.1186/s13750-020-00202-y<\/a><br>Solaire-pb<br>Desybel","Langridge_2020<br>Environ. evid.<br>Outcomes of wildlife transloca<br><a href='https://www.doi.org/10.1186/s13750-020-00199-4'>10.1186/s13750-020-00199-4<\/a><br>Solaire-pb<br>Desybel","Ouédraogo_2020<br>Environ. evid.<br>Can linear transportation infr<br><a href='https://www.doi.org/10.1186/s13750-020-00196-7'>10.1186/s13750-020-00196-7<\/a><br>Solaire-pb<br>Desybel","Sordello_2019<br>Environ. evid.<br>Evidence of the environmental <br><a href='https://www.doi.org/10.1186/s13750-019-0146-6'>10.1186/s13750-019-0146-6<\/a><br>Solaire-pb<br>Desybel","Jeusset_2016<br>Environ. evid.<br>Can linear transportation infr<br><a href='https://www.doi.org/10.1186/s13750-016-0056-9'>10.1186/s13750-016-0056-9<\/a><br>Solaire-pb<br>Desybel","Duchenne_2022<br>Peer community j.<br>Controversy over the decline o<br><a href='https://www.doi.org/10.24072/pcjournal.131'>10.24072/pcjournal.131<\/a><br>Pppirec<br>Dragon","Duchenne_2021<br>Ecol. lett.<br>European plants lagging behind<br><a href='https://www.doi.org/10.1111/ele.13730'>10.1111/ele.13730<\/a><br>Pppirec<br>Impacts","Olivier_2020_2<br>J. appl. ecol.<br>Citizen science involving farm<br><a href='https://www.doi.org/10.1111/1365-2664.13746'>10.1111/1365-2664.13746<\/a><br>Pppirec<br>Landworm<br>Impacts","Deguines_2020<br>sci. total. environ.<br>Assessing the emergence of pro<br><a href='https://www.doi.org/10.1016/j.scitotenv.2020.136842'>10.1016/j.scitotenv.2020.136842<\/a><br>Pppirec<br>Beyonds","Martin_2019<br>Ecol. indic.<br>New indices for rapid assessme<br><a href='https://www.doi.org/10.1016/j.ecolind.2019.01.022'>10.1016/j.ecolind.2019.01.022<\/a><br>Pppirec<br>Impacts","Porcher_2022<br>Landsc. ecol.<br>Landscape floral resources pro<br><a href='https://www.doi.org/10.1007/s10980-021-01353-0'>10.1007/s10980-021-01353-0<\/a><br>Pppirec<br>Impacts","Seibold_2019<br>Nature<br>Arthropod decline in grassland<br><a href='https://www.doi.org/10.1038/s41586-019-1684-3'>10.1038/s41586-019-1684-3<\/a><br>Pppirec<br>Motiver","Cardoso_2020<br>Biol. conserv.<br>Scientists’ warning to humanit<br><a href='https://www.doi.org/10.1016/j.biocon.2020.108426'>10.1016/j.biocon.2020.108426<\/a><br>Pppirec<br>Funbiodiv","Barbaro_2021<br>J. appl. ecol.<br>Organic management and landsca<br><a href='https://www.doi.org/10.1111/1365-2664.13885'>10.1111/1365-2664.13885<\/a><br>Motiver<br>Funbiodiv<br>Beyonds<br>Acoucene","Ricci_2019<br>Proc. r. soc. b biol. sci.<br>Local pesticide use intensity <br><a href='https://www.doi.org/10.1098/rspb.2018.2898'>10.1098/rspb.2018.2898<\/a><br>Motiver<br>Funbiodiv<br>Fellow","Provost_2020<br>Proc. natl. acad. sci.<br>Land-use history impacts funct<br><a href='https://www.doi.org/10.1073/pnas.1910023117'>10.1073/pnas.1910023117<\/a><br>Motiver<br>Landbio<br>Impacts","Karp_2018<br>Proc. natl. acad. sci.<br>Crop pests and predators exhib<br><a href='https://www.doi.org/10.1073/pnas.1800042115'>10.1073/pnas.1800042115<\/a><br>Motiver<br>Funbiodiv<br>Fellow","Rusch_2018<br>Nat. sustain.<br>Evidence that organic farming <br><a href='https://www.doi.org/10.1038/s41893-018-0102-4'>10.1038/s41893-018-0102-4<\/a><br>Motiver<br>Funbiodiv","Rusch_2021<br>Sci. reports<br>Multi-community effects of org<br><a href='https://www.doi.org/10.1038/s41598-021-91095-5'>10.1038/s41598-021-91095-5<\/a><br>Motiver<br>Funbiodiv<br>Fellow","Pelosi_2020<br>Ecotoxicol. environ. saf.<br>A two years field experiment t<br><a href='https://www.doi.org/10.1016/j.ecoenv.2020.110979'>10.1016/j.ecoenv.2020.110979<\/a><br>Motiver<br>Landworm","Pelosi_2021_2<br>Agric. ecosyst. environ.<br>Residues of currently used pes<br><a href='https://www.doi.org/10.1016/j.agee.2020.107167'>10.1016/j.agee.2020.107167<\/a><br>Motiver<br>Landworm","Petit_2020<br>Adv. ecol. res. ecol. res.<br>Landscape-scale expansion of a<br><a href='https://www.doi.org/10.1016/bs.aecr.2020.09.001'>10.1016/bs.aecr.2020.09.001<\/a><br>Motiver<br>Funbiodiv","Bergerot_2022<br>Landsc. ecol.<br>Threshold and weighted-distanc<br><a href='https://www.doi.org/10.1007/s10980-021-01338-z'>10.1007/s10980-021-01338-z<\/a><br>Motiver<br>Acoucene","Jeanneret_2021<br>Landsc. ecol.<br>Agroecology landscapes<br><a href='https://www.doi.org/10.1007/s10980-021-01248-0'>10.1007/s10980-021-01248-0<\/a><br>Motiver<br>Funbiodiv","Pelosi_2021<br>Ecotoxicology<br>The contributions of enchytrae<br><a href='https://www.doi.org/10.1007/s10646-021-02452-z'>10.1007/s10646-021-02452-z<\/a><br>Motiver<br>Landworm","Outhwaite_2022<br>Nature<br>Agriculture and climate change<br><a href='https://www.doi.org/10.1038/s41586-022-04644-x'>10.1038/s41586-022-04644-x<\/a><br>Motiver<br>Beyonds","Ortiz_2021<br>One earth<br>A review of the interactions b<br><a href='https://www.doi.org/10.1016/j.oneear.2020.12.008'>10.1016/j.oneear.2020.12.008<\/a><br>Motiver<br>Beyonds","Gérard_2025<br>Biol. conserv.<br>Putting earthworm conservation<br><a href='https://www.doi.org/10.1016/j.biocon.2024.110911'>10.1016/j.biocon.2024.110911<\/a><br>Landworm<br>Impacts","Moretti_2017<br>Funct. ecol.<br>Handbook of protocols for stan<br><a href='https://www.doi.org/10.1111/1365-2435.12776'>10.1111/1365-2435.12776<\/a><br>Landworm<br>Impacts","Bloor_2021<br>Sci. reports<br>Analysis of complex trophic ne<br><a href='https://www.doi.org/10.1038/s41598-021-97300-9'>10.1038/s41598-021-97300-9<\/a><br>Landworm<br>Impacts","Calderón‐sanou_2021<br>Sci. reports<br>Cascading effects of moth outb<br><a href='https://www.doi.org/10.1038/s41598-021-94227-z'>10.1038/s41598-021-94227-z<\/a><br>Landworm<br>Impacts","Joimel_2017<br>sci. total. environ.<br>Urban and industrial land uses<br><a href='https://www.doi.org/10.1016/j.scitotenv.2017.01.086'>10.1016/j.scitotenv.2017.01.086<\/a><br>Landworm<br>Impacts","Phillips_2017<br>Biodivers. conserv.<br>Land-use effects on local biod<br><a href='https://www.doi.org/10.1007/s10531-017-1356-2'>10.1007/s10531-017-1356-2<\/a><br>Landworm<br>Beyonds","Denelle_2020<br>J. biogeogr.<br>Generalist plants are more com<br><a href='https://www.doi.org/10.1111/jbi.13848'>10.1111/jbi.13848<\/a><br>Landworm<br>Funindic","Violle_2017<br>Trends ecol. evol.<br>Functional rarity: the ecology<br><a href='https://www.doi.org/10.1016/j.tree.2017.02.002'>10.1016/j.tree.2017.02.002<\/a><br>Landworm<br>Impacts<br>Funindic","Ernoult_2022<br>J. ecol.<br>Investigating the effect of ha<br><a href='https://www.doi.org/10.1111/1365-2745.13911'>10.1111/1365-2745.13911<\/a><br>Landbio<br>Indicators","Martin_2019_4<br>Ecol. lett.<br>The interplay of landscape com<br><a href='https://www.doi.org/10.1111/ele.13265'>10.1111/ele.13265<\/a><br>Landbio<br>Funbiodiv","Sueur_2015<br>Biosemiotics<br>Ecoacoustics: the ecological i<br><a href='https://www.doi.org/10.1007/s12304-015-9248-x'>10.1007/s12304-015-9248-x<\/a><br>Landbio<br>Acoucene","Foltête_2012<br>Environ. model. softw.<br>A software tool dedicated to t<br><a href='https://www.doi.org/10.1016/j.envsoft.2012.07.002'>10.1016/j.envsoft.2012.07.002<\/a><br>Interface<br>Acoucene","Bagousse‐pinguet_2021<br>Proc. natl. acad. sci.<br>Functional rarity and evenness<br><a href='https://www.doi.org/10.1073/pnas.2019355118'>10.1073/pnas.2019355118<\/a><br>Indicators<br>Funindic","Lavorel_1997<br>Trends ecol. evol.<br>Plant functional classificatio<br><a href='https://www.doi.org/10.1016/s0169-5347(97)01219-6'>10.1016/s0169-5347(97)01219-6<\/a><br>Indicators<br>Comepi","Gaüzère_2021<br>Oikos<br>Mismatches between birds’ spat<br><a href='https://www.doi.org/10.1111/oik.08289'>10.1111/oik.08289<\/a><br>Impacts<br>Beyonds","Barnagaud_2019<br>Glob. ecol. biogeogr.<br>Functional biogeography of die<br><a href='https://www.doi.org/10.1111/geb.12910'>10.1111/geb.12910<\/a><br>Impacts<br>Acoucene","Eichenberg_2021<br>Glob. chang. biol.<br>Widespread decline in central <br><a href='https://www.doi.org/10.1111/gcb.15447'>10.1111/gcb.15447<\/a><br>Impacts<br>Dragon","Bowler_2021_2<br>Divers. distrib.<br>Winners and losers over 35 yea<br><a href='https://www.doi.org/10.1111/ddi.13274'>10.1111/ddi.13274<\/a><br>Impacts<br>Dragon","Grenié_2017<br>Divers. distrib.<br>Funrar: an r package to charac<br><a href='https://www.doi.org/10.1111/ddi.12629'>10.1111/ddi.12629<\/a><br>Impacts<br>Funindic","Loiseau_2020<br>Nat. commun.<br>Global distribution and conser<br><a href='https://www.doi.org/10.1038/s41467-020-18779-w'>10.1038/s41467-020-18779-w<\/a><br>Impacts<br>Funindic","Bowler_2021<br>Basic appl. ecol.<br>Geographic variation in the po<br><a href='https://www.doi.org/10.1016/j.baae.2021.07.004'>10.1016/j.baae.2021.07.004<\/a><br>Impacts<br>Dragon","Isaac_2020<br>Trends ecol. evol.<br>Data integration for large-sca<br><a href='https://www.doi.org/10.1016/j.tree.2019.08.006'>10.1016/j.tree.2019.08.006<\/a><br>Impacts<br>Dragon","Cordeau_2019<br>Nat. sustain.<br>Mitigating crop yield losses t<br><a href='https://www.doi.org/10.1038/s41893-019-0415-y'>10.1038/s41893-019-0415-y<\/a><br>Funbiodiv<br>Fellow","Cordeau_2022<br>Eur. j. agron.<br>Cropping system diversificatio<br><a href='https://www.doi.org/10.1016/j.eja.2021.126438'>10.1016/j.eja.2021.126438<\/a><br>Funbiodiv<br>Fellow","Petit_2021<br>Ecol. indic.<br>A framework to estimate the co<br><a href='https://www.doi.org/10.1016/j.ecolind.2021.108321'>10.1016/j.ecolind.2021.108321<\/a><br>Funbiodiv<br>Fellow","Rigal_2023<br>Proc. natl. acad. sci.<br>Farmland practices are driving<br><a href='https://www.doi.org/10.1073/pnas.2216573120'>10.1073/pnas.2216573120<\/a><br>Funbiodiv<br>Fellow","Blaix_2023<br>Agric. ecosyst. environ.<br>Forage nutritive value shows s<br><a href='https://www.doi.org/10.1016/j.agee.2023.108369'>10.1016/j.agee.2023.108369<\/a><br>Fellow<br>Comepi","Vaissière_2020<br>Ecol. econ.<br>Biodiversity offsets and payme<br><a href='https://www.doi.org/10.1016/j.ecolecon.2019.106428'>10.1016/j.ecolecon.2019.106428<\/a><br>Elan<br>Beyonds","Guetté_2018<br>Cybergeo<br>« naturalité » : concepts et m<br><a href='https://www.doi.org/10.4000/cybergeo.29140'>10.4000/cybergeo.29140<\/a><br>Elan<br>Acoucene","Olivier_2020<br>Nat. commun.<br>Urbanization and agricultural <br><a href='https://www.doi.org/10.1038/s41467-020-16240-6'>10.1038/s41467-020-16240-6<\/a><br>Dragon<br>Beyonds","Cima_2020<br>Ecol. indic.<br>A test of six simple indices t<br><a href='https://www.doi.org/10.1016/j.ecolind.2019.105885'>10.1016/j.ecolind.2019.105885<\/a><br>Dragon<br>Beyonds","Tres-pratic<br>REVUE SYSTEMATIQUE<br>2022","Spatman<br>SYNTHESE<br>2021","Solaire-pb<br>REVUE SYSTEMATIQUE<br>2021","Rodexpo<br>SYNERGIE<br>2022","Pppirec<br>SYNERGIE<br>2022","Motiver<br>SYNTHESE<br>2022","Landworm<br>SYNTHESE<br>2021","Landbio<br>SYNERGIE<br>2021","Interface<br>SYNERGIE<br>2021","Indicators<br>SYNERGIE<br>2022","Impacts<br>SYNTHESE<br>2021","Funindic<br>SYNERGIE<br>2021","Funbiodiv<br>SYNTHESE<br>2023","Fragshifts<br>SYNERGIE<br>2023","Fellow<br>SYNTHESE<br>2023","Elan<br>SYNERGIE<br>2023","Ebenn<br>REVUE SYSTEMATIQUE<br>2023","Dragon<br>SYNTHESE<br>2022","Discar<br>SYNTHESE<br>2022","Desybel<br>REVUE SYSTEMATIQUE<br>2022","Comepi<br>SYNERGIE<br>2022","Carapat<br>SYNERGIE<br>2023","Beyonds<br>SYNTHESE<br>2023","Acoucene<br>SYNTHESE<br>2021"],"x":[-0.1328040799899596,-0.3497583168861211,0.6390727131208542,0.4408269533478923,0.84476744701942,0.7298191035080075,0.8240834112259714,0.8070620567885833,0.04829803852244985,0.4508764099833182,0.6604187060583075,0.8731425101373538,0.8641037370130242,0.9680700922094536,0.9838785009238209,0.7101618204894486,0.777443925215294,0.9445589437261424,1,0.27458361491206,0.04662550949554434,-0.1261817916594931,0.03282731452658672,0.1354252317824474,-0.02675460876996794,-0.2000927211506465,-0.2586590170335027,-0.1630010500686834,-0.5835225220742272,-0.288201524095418,-0.589991307029283,-0.4675302994683153,-0.622434996761386,-0.4175687438475785,-0.4622536947762638,-0.3536394198397914,-0.1153671832015731,-0.4267255726936077,-0.3804839516014873,-0.1487384412200907,-0.08136053441923763,-0.2060737956918968,-0.07011084603585049,-0.130987687891851,0.02069197099079645,-0.05177198683581852,-0.1109473085927442,-0.4040711966652711,-0.1966512720188438,-0.7527938966057142,-0.6574490969213281,-0.3059007721155419,0.4604885641953778,-0.5663479134830567,-0.9397451314740494,0.1521168794808936,0.144168467410039,0.3381405011014003,0.304764940552662,0.05126994623742887,-0.01849818720550689,0.4034254447255845,0.3415760587156791,-0.680908829741151,-0.7470916373386902,-0.7522577318201874,-0.6478395520296854,-0.9628813069833069,0.2733318053865728,0.2529657519915602,0.3607187501001068,0.3291731215801148,-0.2415079038812606,0.5716992998920543,0.8140883774458183,-0.06629232641770255,-0.02318371136092678,-0.3642341802542157,-0.2536618626436046,-0.5812415014921135,0.7276400853990685,-0.7782727307250468,0.06204860874410012,-0.2470369981320858,-0.4548461108420975,-0.2909502000683152,-0.7790657279778227,0.4551573027263245,0.5389834367590314,0.4249284157164446,0.1463304913067849,0.847491784144188,-1,0.6789225959266401,0.1247950766134061,0.07129528727426826],"y":[0.7758093470824452,0.8283035199668349,-0.1074658720351401,0.4407851759876429,0.2784876671241112,0.4009452075590256,0.1742626724372549,0.3653383961970167,0.08646205775955074,-0.08311388858761204,-0.6557680074868829,-0.2023068686601286,-0.5103237793795944,-0.2119887146641325,-0.3901996943595428,-0.4521341395909667,-0.5329857188233382,-0.4798796182572639,-0.2973291648158598,0.1701348771695714,0.3323208401152935,0.3935101319491401,-0.1707153893696065,0.3741897439828608,0.372078284050801,-0.03417982825749444,-0.1051560313768882,-0.2058043942386896,-0.3241702572375705,0.2357856480118592,-0.2460193322612935,-0.3770137462904569,-0.1757085505807147,0.2484967853371467,0.1973528720540496,-0.4025746616748963,-0.265439770575113,-0.4434170668011653,0.1797842971258705,-0.3524578097715908,-0.3574687791187275,0.595783892957515,0.5848528476875328,0.6434143025686743,0.671841365490019,0.6996644629789806,0.1625595800939172,0.7424202705370571,0.7125837661032557,0.438120295839961,-0.006526305414829348,0.0427265666986687,0.06050284042708998,0.8445610374114447,0.4642608671609576,0.1516019552955377,0.2339645082548807,0.4485109152745697,0.5198131415342919,0.852276002466458,0.8554779545270086,0.5430928157767827,0.5875374755627232,-0.4126676688707395,-0.2051184649553455,-0.3911517316025112,-0.4799175705153008,-0.03910010707932632,-0.4394663083336545,-0.3343125489972701,-0.05669676248475375,0.009285072732892141,1,0.1883379607494049,-0.3787822469339668,-1,0.136904088414207,-0.1396446743883859,0.5074429771655351,0.2097440155280785,0.2412967158817527,0.6464763992129012,0.5053926902159527,0.8858088090995622,-0.2349404886794836,-0.9772056811550486,-0.2834162363699714,-0.3563182918003893,-0.8162488829987362,0.2558674035276387,-0.991871701843877,-0.3272285910631328,0.2209708990809145,0.9879174490984528,-0.1576346307651458,-0.07725866260384084]},"edges":{"from":["Bonfanti_2018","Pelosi_2014","Villemey_2018","Talluto_2017","Clauzel_2020","Clauzel_2021","Foltête_2020","Sahraoui_2017","Sirami_2019","Newbold_2015","Lafitte_2022","Ouédraogo_2021","Langridge_2021","Ouédraogo_2020_2","Sordello_2020","Langridge_2020","Ouédraogo_2020","Sordello_2019","Villemey_2018","Jeusset_2016","Duchenne_2022","Duchenne_2021","Olivier_2020_2","Deguines_2020","Martin_2019","Porcher_2022","Seibold_2019","Cardoso_2020","Barbaro_2021","Ricci_2019","Provost_2020","Karp_2018","Rusch_2018","Rusch_2021","Pelosi_2020","Pelosi_2021_2","Petit_2020","Bergerot_2022","Jeanneret_2021","Pelosi_2021","Outhwaite_2022","Seibold_2019","Ortiz_2021","Gérard_2025","Bonfanti_2018","Moretti_2017","Bloor_2021","Calderón‐sanou_2021","Joimel_2017","Pelosi_2020","Pelosi_2021_2","Pelosi_2021","Phillips_2017","Denelle_2020","Olivier_2020_2","Violle_2017","Pelosi_2014","Ernoult_2022","Martin_2019_4","Provost_2020","Sueur_2015","Clauzel_2020","Clauzel_2021","Foltête_2020","Foltête_2012","Sahraoui_2017","Ernoult_2022","Bagousse‐pinguet_2021","Lavorel_1997","Gérard_2025","Gaüzère_2021","Barnagaud_2019","Eichenberg_2021","Duchenne_2021","Bowler_2021_2","Grenié_2017","Olivier_2020_2","Bonfanti_2018","Moretti_2017","Provost_2020","Sirami_2019","Bloor_2021","Calderón‐sanou_2021","Loiseau_2020","Violle_2017","Joimel_2017","Martin_2019","Bowler_2021","Porcher_2022","Talluto_2017","Isaac_2020","Grenié_2017","Loiseau_2020","Violle_2017","Denelle_2020","Bagousse‐pinguet_2021","Martin_2019_4","Barbaro_2021","Sirami_2019","Karp_2018","Cordeau_2019","Rusch_2018","Cordeau_2022","Petit_2021","Cardoso_2020","Petit_2020","Jeanneret_2021","Ricci_2019","Rigal_2023","Rusch_2021","Ricci_2019","Karp_2018","Cordeau_2019","Rusch_2021","Cordeau_2022","Petit_2021","Blaix_2023","Rigal_2023","Vaissière_2020","Guetté_2018","Villemey_2018","Lafitte_2022","Duchenne_2022","Villemey_2018","Eichenberg_2021","Bowler_2021_2","Olivier_2020","Isaac_2020","Cima_2020","Bowler_2021","Ouédraogo_2021","Langridge_2021","Ouédraogo_2020_2","Sordello_2020","Langridge_2020","Ouédraogo_2020","Sordello_2019","Villemey_2018","Jeusset_2016","Lavorel_1997","Blaix_2023","Gaüzère_2021","Barbaro_2021","Outhwaite_2022","Olivier_2020","Deguines_2020","Ortiz_2021","Cima_2020","Vaissière_2020","Newbold_2015","Phillips_2017","Guetté_2018","Barnagaud_2019","Barbaro_2021","Bergerot_2022","Foltête_2012","Sueur_2015"],"to":["Tres-pratic","Tres-pratic","Spatman","Spatman","Spatman","Spatman","Spatman","Spatman","Spatman","Spatman","Solaire-pb","Solaire-pb","Solaire-pb","Solaire-pb","Solaire-pb","Solaire-pb","Solaire-pb","Solaire-pb","Solaire-pb","Solaire-pb","Pppirec","Pppirec","Pppirec","Pppirec","Pppirec","Pppirec","Pppirec","Pppirec","Motiver","Motiver","Motiver","Motiver","Motiver","Motiver","Motiver","Motiver","Motiver","Motiver","Motiver","Motiver","Motiver","Motiver","Motiver","Landworm","Landworm","Landworm","Landworm","Landworm","Landworm","Landworm","Landworm","Landworm","Landworm","Landworm","Landworm","Landworm","Landworm","Landbio","Landbio","Landbio","Landbio","Interface","Interface","Interface","Interface","Interface","Indicators","Indicators","Indicators","Impacts","Impacts","Impacts","Impacts","Impacts","Impacts","Impacts","Impacts","Impacts","Impacts","Impacts","Impacts","Impacts","Impacts","Impacts","Impacts","Impacts","Impacts","Impacts","Impacts","Impacts","Impacts","Funindic","Funindic","Funindic","Funindic","Funindic","Funbiodiv","Funbiodiv","Funbiodiv","Funbiodiv","Funbiodiv","Funbiodiv","Funbiodiv","Funbiodiv","Funbiodiv","Funbiodiv","Funbiodiv","Funbiodiv","Funbiodiv","Funbiodiv","Fellow","Fellow","Fellow","Fellow","Fellow","Fellow","Fellow","Fellow","Elan","Elan","Elan","Ebenn","Dragon","Dragon","Dragon","Dragon","Dragon","Dragon","Dragon","Dragon","Desybel","Desybel","Desybel","Desybel","Desybel","Desybel","Desybel","Desybel","Desybel","Comepi","Comepi","Beyonds","Beyonds","Beyonds","Beyonds","Beyonds","Beyonds","Beyonds","Beyonds","Beyonds","Beyonds","Acoucene","Acoucene","Acoucene","Acoucene","Acoucene","Acoucene"]},"nodesToDataframe":true,"edgesToDataframe":true,"options":{"width":"100%","height":"100%","nodes":{"shape":"dot","physics":false},"manipulation":{"enabled":false},"edges":{"smooth":true,"arrows":"to"},"physics":{"stabilization":false}},"groups":null,"width":null,"height":null,"idselection":{"enabled":false,"style":"width: 150px; height: 26px","useLabels":true,"main":"Select by id"},"byselection":{"enabled":false,"style":"width: 150px; height: 26px","multiple":false,"hideColor":"rgba(200,200,200,0.5)","highlight":false},"main":null,"submain":null,"footer":null,"background":"rgba(0, 0, 0, 0)","igraphlayout":{"type":"square"},"highlight":{"enabled":true,"hoverNearest":false,"degree":1,"algorithm":"all","hideColor":"rgba(200,200,200,0.5)","labelOnly":true},"collapse":{"enabled":false,"fit":false,"resetHighlight":true,"clusterOptions":null,"keepCoord":true,"labelSuffix":"(cluster)"}},"evals":[],"jsHooks":[]}</script>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-birefs-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: Réseau simplifié avec les projets (en orange) et les références (en bleu) qui ont été cités par plusieurs projets. Le type de projet est représenté par la forme du nœud: triangle pour les revues, losange pour les synergies et hexagone pour les synthèse.
+</figcaption>
+</figure>
+</div>
+</div>
+</section>
+<section id="proximité-des-projets" class="level1">
+<h1>Proximité des projets</h1>
+<p>La proximité des projets peut être estimer en additionnant le nombre de chercheurs partagés, et le nombre de références co-cités. On obtient ainsi un réseau de proximité des projets, ce qui facilite l’identification de groupe de projet avec des thèmes communs. Le découpage en groupe est un algorithme d’optimisation qui maximize le nombre de lien intra-groupe et minimise le nombre de liens inter-groupe.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div class="visNetwork html-widget html-fill-item" id="htmlwidget-998bc0a566ac52ef35c5" style="width:100%;height:464px;"></div>
+<script type="application/json" data-for="htmlwidget-998bc0a566ac52ef35c5">{"x":{"nodes":{"id":["Acoucene","Beyonds","Carapat","Comepi","Desybel","Discar","Dragon","Ebenn","Elan","Fellow","Fragshifts","Funbiodiv","Funindic","Impacts","Indicators","Interface","Landbio","Landworm","Motiver","Pppirec","Rodexpo","Solaire-pb","Spatman","Tres-pratic"],"type":["SYNTHESE","SYNTHESE","SYNERGIE","SYNERGIE","REVUE SYSTEMATIQUE","SYNTHESE","SYNTHESE","REVUE SYSTEMATIQUE","SYNERGIE","SYNTHESE","SYNERGIE","SYNTHESE","SYNERGIE","SYNTHESE","SYNERGIE","SYNERGIE","SYNERGIE","SYNTHESE","SYNTHESE","SYNERGIE","SYNERGIE","REVUE SYSTEMATIQUE","SYNTHESE","REVUE SYSTEMATIQUE"],"year":[2021,2023,2023,2022,2022,2022,2022,2023,2023,2023,2023,2023,2021,2021,2022,2021,2021,2021,2022,2022,2022,2021,2021,2022],"group":["1","1","isolated","2","3","isolated","4","3","1","2","isolated","2","4","4","2","1","2","4","2","4","isolated","3","1","4"],"color":["#66C2A5","#66C2A5","#b5b5b5","#FC8D62","#8DA0CB","#b5b5b5","#E78AC3","#8DA0CB","#66C2A5","#FC8D62","#b5b5b5","#FC8D62","#E78AC3","#E78AC3","#FC8D62","#66C2A5","#FC8D62","#E78AC3","#FC8D62","#E78AC3","#b5b5b5","#8DA0CB","#66C2A5","#E78AC3"],"title":["Acoucene<br>SYNTHESE<br>2021","Beyonds<br>SYNTHESE<br>2023","Carapat<br>SYNERGIE<br>2023","Comepi<br>SYNERGIE<br>2022","Desybel<br>REVUE SYSTEMATIQUE<br>2022","Discar<br>SYNTHESE<br>2022","Dragon<br>SYNTHESE<br>2022","Ebenn<br>REVUE SYSTEMATIQUE<br>2023","Elan<br>SYNERGIE<br>2023","Fellow<br>SYNTHESE<br>2023","Fragshifts<br>SYNERGIE<br>2023","Funbiodiv<br>SYNTHESE<br>2023","Funindic<br>SYNERGIE<br>2021","Impacts<br>SYNTHESE<br>2021","Indicators<br>SYNERGIE<br>2022","Interface<br>SYNERGIE<br>2021","Landbio<br>SYNERGIE<br>2021","Landworm<br>SYNTHESE<br>2021","Motiver<br>SYNTHESE<br>2022","Pppirec<br>SYNERGIE<br>2022","Rodexpo<br>SYNERGIE<br>2022","Solaire-pb<br>REVUE SYSTEMATIQUE<br>2021","Spatman<br>SYNTHESE<br>2021","Tres-pratic<br>REVUE SYSTEMATIQUE<br>2022"],"label":["Acoucene","Beyonds","Carapat","Comepi","Desybel","Discar","Dragon","Ebenn","Elan","Fellow","Fragshifts","Funbiodiv","Funindic","Impacts","Indicators","Interface","Landbio","Landworm","Motiver","Pppirec","Rodexpo","Solaire-pb","Spatman","Tres-pratic"],"x":[-0.2327063955063713,-0.2479119218619286,1,-1,0.1798175690195585,0.8909879620359711,-0.1903611122374674,0.500869636390447,-0.02316224947017098,-0.8023292079586062,0.5234336856411774,-0.6058987968652827,-0.7665400737057374,-0.4800814732407915,-0.6051544562204731,-0.2488629036100417,-0.5518326089240921,-0.6263532566926489,-0.5560790957586057,-0.4029619675851427,-0.1620117551013038,0.2805934810103505,-0.1261916652780549,-0.6724352525351913],"y":[0.2620471542441574,0.4766441920083415,-0.2382402674708823,-0.2660945762306935,0.3532950705143254,1,0.6225110391281579,0.3860497113054482,0.4930374182895105,0.1634050134443934,-0.7621112959087684,0.2604010810685686,0.4501799239380428,0.5505584804556729,-0.146509945499375,-0.09701976313912186,0.03747250823781223,0.6225178761529571,0.3871147513985453,0.698015873087938,-1,0.4338858471578235,0.2137846597180959,0.8214371195408658]},"edges":{"from":["Acoucene","Acoucene","Acoucene","Acoucene","Acoucene","Acoucene","Acoucene","Acoucene","Beyonds","Beyonds","Beyonds","Beyonds","Beyonds","Beyonds","Beyonds","Beyonds","Comepi","Comepi","Desybel","Desybel","Desybel","Desybel","Desybel","Dragon","Dragon","Dragon","Dragon","Dragon","Ebenn","Elan","Elan","Fellow","Fellow","Funbiodiv","Funbiodiv","Funbiodiv","Funbiodiv","Funbiodiv","Funindic","Funindic","Funindic","Impacts","Impacts","Impacts","Impacts","Impacts","Impacts","Indicators","Indicators","Interface","Landbio","Landworm","Landworm","Landworm","Motiver","Solaire-pb"],"to":["Beyonds","Desybel","Elan","Funbiodiv","Impacts","Interface","Landbio","Motiver","Dragon","Elan","Funbiodiv","Impacts","Landworm","Motiver","Pppirec","Spatman","Fellow","Indicators","Dragon","Ebenn","Elan","Solaire-pb","Spatman","Elan","Impacts","Pppirec","Solaire-pb","Spatman","Solaire-pb","Solaire-pb","Spatman","Funbiodiv","Motiver","Impacts","Landbio","Motiver","Pppirec","Spatman","Impacts","Indicators","Landworm","Landbio","Landworm","Motiver","Pppirec","Spatman","Tres-pratic","Interface","Landbio","Spatman","Motiver","Motiver","Pppirec","Tres-pratic","Pppirec","Spatman"],"weight":[1,1,1,1,1,1,1,1.4,1.4,4,1,1,1,1.7,1,1,1,1,1,1,1,5,1,1,3,2,1,1,2,1,1,3.6,1.7,1,1,3.6,1,1,2.7,1,1.4,1,3.8,1,3,1.4,2,1,2,2,1,2.7,1,2.4,1,1],"width":[1,1,1,1,1,1,1,1.4,1.4,4,1,1,1,1.7,1,1,1,1,1,1,1,5,1,1,3,2,1,1,2,1,1,3.6,1.7,1,1,3.6,1,1,2.7,1,1.4,1,3.8,1,3,1.4,2,1,2,2,1,2.7,1,2.4,1,1]},"nodesToDataframe":true,"edgesToDataframe":true,"options":{"width":"100%","height":"100%","nodes":{"shape":"dot","physics":false},"manipulation":{"enabled":false},"edges":{"smooth":false},"physics":{"stabilization":false}},"groups":["1","isolated","2","3","4"],"width":null,"height":null,"idselection":{"enabled":false,"style":"width: 150px; height: 26px","useLabels":true,"main":"Select by id"},"byselection":{"enabled":true,"style":"width: 150px; height: 26px","multiple":true,"hideColor":"rgba(200,200,200,0.5)","highlight":false,"variable":"group","main":"Select by group","values":["1","2","3","4","isolated"]},"main":null,"submain":null,"footer":null,"background":"rgba(0, 0, 0, 0)","igraphlayout":{"type":"square"},"highlight":{"enabled":true,"hoverNearest":false,"degree":1,"algorithm":"all","hideColor":"rgba(200,200,200,0.5)","labelOnly":true},"collapse":{"enabled":false,"fit":false,"resetHighlight":true,"clusterOptions":null,"keepCoord":true,"labelSuffix":"(cluster)"}},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+</section>
+<section id="conclusion" class="level1">
+<h1>Conclusion</h1>
+<p>Mieux comprendre les relations entre les projets = mieux comprendre le context des recherches et de leur résultats.</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

@@ -9,38 +9,42 @@ The first case study uses [FRB-MTE-OFB projects](https://www.fondationbiodiversi
 
 
 
-- clean membership spellings
+1. clean membership spellings
 
 ``` r
 source("analysis/M1_clean_mte_members.R")
 ```
 
-- clean references, get their DOI when missing and fetch records from [openalex database](https://openalex.org/)
+2. clean references, get their DOI when missing and fetch records from [openalex database](https://openalex.org/)
 
 ``` r
 source("analysis/M2_prepare_mte_references.R")
 ```
 
-- explore [bibliometrix R package](https://frbcesab.github.io/biblioscape/analysis/M3_explore_bibliometrix.html)
+3. explore [bibliometrix R package](https://frbcesab.github.io/biblioscape/analysis/M3_explore_bibliometrix.html)
 ```r
 quarto::quarto_render("analysis/M3_explore_bibliometrix.qmd")
 ```
 
-- explore [FRB-MTE-OFB membership network](https://frbcesab.github.io/biblioscape/analysis/M4_explore_mte_members.html)
+4. explore [FRB-MTE-OFB membership network](https://frbcesab.github.io/biblioscape/analysis/M4_explore_mte_members.html)
 ```r
 quarto::quarto_render("analysis/M4_explore_mte_members.qmd")
 ```
 
-- explore [FRB-MTE-OFB citation network](https://frbcesab.github.io/biblioscape/analysis/M5_explore_mte_citations.html)  
+5. explore [FRB-MTE-OFB citation network](https://frbcesab.github.io/biblioscape/analysis/M5_explore_mte_citations.html)  
 ```r
 quarto::quarto_render("analysis/M5_explore_mte_citations.qmd")
 ```
 
-- explore [FRB-MTE-OFB bibliographic coupling](https://frbcesab.github.io/biblioscape/analysis/M6_explore_mte_coupling.html)  
+6. explore [FRB-MTE-OFB bibliographic coupling](https://frbcesab.github.io/biblioscape/analysis/M6_explore_mte_coupling.html)  
 ```r
 quarto::quarto_render("analysis/M6_explore_mte_coupling.qmd")
 ```
 
+7. summary of [FRB-MTE-OFB project network](https://frbcesab.github.io/biblioscape/analysis/M7_summary.html)  
+```r
+quarto::quarto_render("analysis/M7_summary.qmd")
+```
 
 ### FRB-CESAB projects
 

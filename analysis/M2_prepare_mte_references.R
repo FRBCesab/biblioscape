@@ -41,6 +41,14 @@ df <- df[!duplicated(df[, c("Project", "DOI", "Title", "Year")]), ]
 # table(df$Project, df$Year)
 # table(df$Project, df$Relation)
 
+# check if any missing output from CESAB's Zotero
+# cesab <- read.csv(here::here("data", "derived-data", "cesab_zotero.csv"))
+# cesab <- cesab[cesab$item_id != "", ]
+# mte_ref <- tolower(cesab$folder) %in% tolower(df$Project)
+# # unique(cesab$folder[mte_ref])
+# # unique(cesab$folder[!mte_ref])
+# cesab[mte_ref, ][!tolower(cesab$DOI[mte_ref]) %in% tolower(df$DOI), ]
+
 # Replace missing DOI by NA
 df$DOI[df$DOI == ""] <- NA
 
