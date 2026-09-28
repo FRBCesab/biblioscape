@@ -1,5 +1,5 @@
 ---
-title: "Analyse réseau des projet FRB-MTE-OFB"
+title: "Analyse réseau des projets FRB-MTE-OFB"
 author: Romain Frelat
 date: today
 format: 
@@ -10,14 +10,12 @@ execute:
   warning: false
 ---
 
-# Résumé
+## Résumé
 
-Il est difficile d'appréhender la diversité des projets financé par le programme FRB-MTE-OFB. Les analyses de réseaux permettent de mettre en avant les relations entre les projets, en considérant leur membres actifs mais aussi la littérature scientifique auquel les projets se réfèrent. Les 24 projets financés ont un nombre assez important d'inter-relation avec 16 chercheurs collaborant au sein de plusieurs projets; et 72 publications scientifiques communes à au moins deux projets. Ces relations permettent d'identifier 4 groupes de projet fortement liés.  
-
-*+ intepretation des groupes*
+Le [programme FRB-MTE-OFB](https://www.fondationbiodiversite.fr/la-frb-en-action/programmes-et-projets/impacts-sur-la-biodiversite-terrestre-dans-lanthropocene/) a financé 24 projets de recherche pour travailler sur la caractérisation de l’impact des pressions induites par les activités humaines sur la biodiversité terrestre. Ces projets couvrent des thématiques et des approches variées. Les analyses de réseaux permettent d'appréhender la diversité des projets financés et de mettre en évidence les relations entre les projets, en considérant à la fois leurs membres actifs et la littérature scientifique sur laquelle ils s'appuient. Les 24 projets financés présentent de nombreuses interrelations, avec 16 chercheurs impliqués dans plusieurs projets et 72 publications scientifiques citées par au moins deux projets. Ces relations permettent d'identifier quatre groupes de projets selon leur approche: écologie des communautés, agronomie, paysages et socio-écosystèmes, et revue systématiques. La caractérisation des relations entre les projets permet de mieux comprendre le contexte des recherches menées et contribuera à une meilleure valorisation de leurs résultats.  
 
 
-# Introduction
+## Introduction
 
 ```{r}
 #| label: setup
@@ -50,12 +48,9 @@ n_mem$Type <- meta$Type[match(n_mem$Var1, meta$Acronyme)]
 n_typ <- table(n_mem$Type)
 ```
 
-Le [programme FRB-MTE-OFB](https://www.fondationbiodiversite.fr/la-frb-en-action/programmes-et-projets/impacts-sur-la-biodiversite-terrestre-dans-lanthropocene/) a financé ```r sum(n_typ)``` projets de recherche pour travailler sur la caractérisation de l’impact des pressions induites par les activités humaines sur la biodiversité terrestre. Ces projets ont trois formats différent: ```r n_typ["SYNTHESE"]``` projets de *synthèse*, ```r n_typ["SYNERGIE"]``` projets *synergie*, et ```r n_typ["REVUE SYSTEMATIQUE"]``` projets de *revues systématiques*.    
+Les ```r sum(n_typ)``` projets de recherche financés suivent trois formats différents: ```r n_typ["SYNTHESE"]``` projets de *synthèse*, ```r n_typ["SYNERGIE"]``` projets *synergie*, et ```r n_typ["REVUE SYSTEMATIQUE"]``` projets de *revues systématiques*. Pour mieux comprendre les champs de recherche des projets sélectionnés, il est possible d'utiliser les relations entre projets mesurés par l'intermédiaire du [nombre de chercheur en commun](#réseau-de-collaborations) ou du [nombre de références en commun](#réseau-de-citations). 
 
-Pour mieux comprendre les champs de recherche des projets sélectionnés, il est possible d'utiliser les relations entre projets mesurés par l'intermédiaire du nombre de chercheur en commun (#réseau-de-collaborations) ou du nombre de références en commun (#réseau-de-citations). 
-
-
-# Réseau de collaborations
+## Réseau de collaborations
 
 ```{r}
 # list all group per name
@@ -64,11 +59,11 @@ nproj <- table(table(mem$name))
 ```
 
 
-Le réseau de collaborations est construit à partir de la liste des membres des projets. Au total, ```r length(unique(mem$name))``` chercheurs sont engagés dans les activités du programme. La majorité des scientifiques participe a un seul projet (N=```r nproj["1"]```), mais ```r nproj["2"]``` scientifiques sont investis dans deux projets; et ```r nproj["3"]``` scientifiques collaborent à  trois projets du programme. Quand les projets partagent un ou plusieurs chercheurs, alors leurs thématiques doit être assez proche. Plus d'explorations sur les réseaux de collaboration [ici](https://frbcesab.github.io/biblioscape/analysis/M4_explore_mte_members.html).
+Le réseau de collaborations a été construit à partir de la liste des membres des projets. Au total, ```r length(unique(mem$name))``` chercheurs sont engagés dans les activités du programme. La majorité des chercheurs participe à un seul projet (N=```r nproj["1"]```), mais ```r nproj["2"]``` chercheurs sont investis dans deux projets; et ```r nproj["3"]``` chercheurs collaborent à trois projets du programme. Quand les projets partagent un ou plusieurs chercheurs, alors leurs thématiques doivent être assez proches. En reliant chercheurs et projets de recherche, on obtient le réseau de collaborations (@fig-bicolab). Plus d'explorations sur les réseaux de collaboration [ici](https://frbcesab.github.io/biblioscape/analysis/M4_explore_mte_members.html).
 
 ```{r}
 #| label: fig-bicolab
-#| fig-cap: "Réseau simplifié avec les projets (en orange) et les membres (en bleu) qui ont participé à plusieurs projets. Le type de projet est représenté par la forme du nœud: triangle pour les revues systématiques, losange pour les synergies et hexagone pour les synthèses."
+#| fig-cap: "Réseau simplifié avec les projets (en orange) et les chercheurs (en bleu) qui ont participé à plusieurs projets. Le type de projet est représenté par la forme du nœud: triangle pour les revues systématiques, losange pour les synergies et hexagone pour les synthèses."
 #| 
 netMEM <- graph_from_data_frame(
   mem[, c("name", "group")]
@@ -128,7 +123,7 @@ visNetwork::visIgraph(
 montrer la chronologie? Pas très intéressant pour 3 années
 -->
 
-# Réseau de citations
+## Réseau de citations
 
 ```{r}
 # load reference list
@@ -223,11 +218,9 @@ uref$shortname[dup] <- gsub("_3$", "_4", uref$shortname[dup])
 ```
 
 
-Pour mesurer la similarité des sujets scientifiques, il est aussi possible d'utiliser les citations utilisés par les chercheurs lors de l'appel à projet. Si les projets utilisent les mêmes références, alors ils sont certainement liés par une même méthode ou un même sujet d'étude. 
+Pour mesurer la similarité des sujets scientifiques, il est aussi possible d'utiliser les citations utilisés par les chercheurs lors de l'appel à projet. Si les projets utilisent les mêmes références, alors ils sont certainement liés par une même méthode ou un même sujet d'étude. En reliant les projets de recherche aux articles cités, on obtient le réseau de citations (@fig-birefs). Plus d'exploration sur les réseaux de citations [ici](https://frbcesab.github.io/biblioscape/analysis/M5_explore_mte_citations.html)
 
-Chaque projet a cité entre ```r min(n_ref$Freq)``` et ```r max(n_ref$Freq)``` références dans la description de leur projet (*proposal*). Le format des *proposal* dépend du type de projet, avec une description plus complète pour les projets de *Synthese* comparée au projets *Synergie* ou au *Revues systématiques*.  
-
-Au total, les ```r nrow(n_ref)``` projets se sont construit sur ```r nrow(ref)``` références. La grande majorité de ces références n'est citée que par un projet (N=```r ndoi["1"]```), mais ```r sum(ndoi[-1])``` publications sont cités par au moins deux projets. Quand les projets partagent une ou plusieurs références, alors leur thématiques doit être assez proche. Plus d'exploration sur les réseaux de collaboration [ici](https://frbcesab.github.io/biblioscape/analysis/M5_explore_mte_citations.html)
+Chaque projet a cité entre ```r min(n_ref$Freq)``` et ```r max(n_ref$Freq)``` références dans la description de leur projet (*proposal*). Le format des *proposal* dépend du type de projet, avec une description plus complète pour les projets de *Synthese* comparée au projets *Synergie* ou au *Revues systématiques*. Au total, les ```r nrow(n_ref)``` projets se sont basés sur ```r nrow(ref)``` références. La grande majorité de ces références ne sont citées que par un projet, mais ```r sum(ndoi[-1])``` références sont citées par au moins deux projets.
 
 ```{r}
 #| label: fig-birefs
@@ -293,30 +286,15 @@ visNetwork::visIgraph(
   idToLabel = FALSE,
   smooth = TRUE
 ) |>
-  # visLegend(
-  #   addNodes = list(
-  #     list(
-  #       label = "Project",
-  #       shape = "square",
-  #       color = "red"
-  #     ),
-  #     list(
-  #       label = "Reference",
-  #       shape = "dot",
-  #       color = "blue"
-  #     )
-  #   ),
-  #   useGroups = FALSE
-  # ) |>
   visOptions(
     highlightNearest = TRUE,
   )
 ```
 
 
-# Proximité des projets
+## Proximité des projets
 
-La proximité des projets peut être estimer en additionnant le nombre de chercheurs partagés, et le nombre de références co-cités. On obtient ainsi un réseau de proximité des projets, ce qui facilite l'identification de groupe de projet avec des thèmes communs. Le découpage en groupe est un algorithme d'optimisation qui maximize le nombre de lien intra-groupe et minimise le nombre de liens inter-groupe. 
+La proximité des projets peut être estimée en additionnant le nombre de chercheurs partagés, et le nombre de références co-cités. On obtient ainsi un réseau de proximité des projets, ce qui permet l'identification de groupe de projet avec des thèmes communs (@fig-pronet). Le découpage en groupe est un algorithme d'optimisation qui maximise le nombre de lien intra-groupe et minimise le nombre de liens inter-groupe. En d'autre terme, les projets d'un même groupe ont beaucoup de liens entres-eux, et peu de liens vers des projets d'autres groupes.
 
 ```{r}
 splitMEM <- bipartite_projection(netMEM)
@@ -344,10 +322,30 @@ net2 <- graph_from_adjacency_matrix(pr2, weighted = TRUE, mode = "undirected")
 mod2 <- cluster_optimal(net2) |> membership()
 mod2[!isolated] <- as.numeric(as.factor(mod2[!isolated]))
 mod2[isolated] <- max(mod2[!isolated]) + 1
+
+# using Jaccard for balanced weights
+# Jaccard similarity
+# group_mem <- table(mem$group, mem$name)
+# jaMEM <- proxy::simil(group_mem, method = "Jaccard", diag = TRUE, upper = TRUE)
+# group_ref <- table(ref$Project, ref$DOI)
+# jaREF <- proxy::simil(group_ref, method = "Jaccard", diag = TRUE, upper = TRUE)
+# pr2 <- (jaMEM + jaREF) * 100
+# net2 <- graph_from_adjacency_matrix(
+#   as.matrix(pr2),
+#   weighted = TRUE,
+#   mode = "undirected"
+# )
+# mod2 <- cluster_optimal(net2) |> membership()
+# mod2[!isolated] <- as.numeric(as.factor(mod2[!isolated]))
+# mod2[isolated] <- max(mod2[!isolated]) + 1
 ```
 
 ```{r}
-V(net1)$type <- as.factor(meta$Type[match(V(net1)$name, meta$Acronyme)])
+#| label: fig-pronet
+#| fig-cap: "Réseau de relations entre projets. Les liens représentent le nombre de chercheurs ou de références en commun. Le type de projet est représenté par la forme du nœud: triangle pour les revues, losange pour les synergies et hexagone pour les synthèse. La couleur du nœud représente les groupes de projets."
+#|
+V(net1)$type <- meta$Type[match(V(net1)$name, meta$Acronyme)]
+V(net1)$shape <- shape_conv[V(net1)$type]
 V(net1)$year <- meta$Year[match(V(net1)$name, meta$Acronyme)]
 V(net1)$group <- ifelse(mod1 == max(mod1), "isolated", mod1)
 pal <- c(RColorBrewer::brewer.pal(max(mod1) - 1, "Set2"), "#b5b5b5")
@@ -360,11 +358,15 @@ V(net1)$title <- paste(
   sep = "<br>"
 )
 
+E(net1)$color <- apply(igraph::as_edgelist(net1), 1, function(x) {
+  return(ifelse(mod1[x[1]] != mod1[x[2]], "#606060", pal[mod1[x[1]]]))
+})
+
 visNetwork::visIgraph(
   net1,
-  randomSeed = 54,
+  randomSeed = 25,
   layout = "layout_with_fr",
-  weights = E(net2)$weight
+  weights = E(net1)$weight
 ) |>
   visOptions(
     highlightNearest = TRUE,
@@ -405,22 +407,108 @@ visNetwork::visIgraph(
 
 
 ```{r}
+#| label: fig-wdmod
+#| fig-cap: "Nuages de mots-clé par groupe de projet."
+#| fig.width: 8
+#| fig.height: 8
 # select keywords et faire wordplot
-# M$id_oa
+ref$keywords <- M$ID[match(ref$DOI, M$DI)]
+ref$module <- mod1[match(ref$Project, names(mod1))]
+keysplit <- sapply(ref$keywords, strsplit, "; ")
+ukey <- sort(unique(unlist(keysplit))) # 1185 unique keywords
+refkey <- sapply(keysplit, function(x) {
+  as.numeric(ukey %in% x)
+}) # 1151 keywords, 1123 publications
+dimnames(refkey)[[1]] <- tolower(ukey)
+# remove unfrequent keywords
+refkey <- refkey[rowSums(refkey) >= 10, ]
+# standardize the number of keywords per publication
+stkey <- t(t(refkey) / colSums(refkey))
+stkey[is.na(stkey)] <- 0
 
-# M$ID <- tolower(M$ID)
-# keysplit2 <- sapply(M$ID, strsplit, "; ")
-# ukey2 <- sort(unique(unlist(keysplit2)))
-# refkey2 <- sapply(keysplit2, function(x) {
-#   as.numeric(ukey2 %in% x)
-# })
-# M$KW_Merged
+keymod <- rowsum(t(stkey), ref$module)
+dimnames(keymod)[[2]] <- dimnames(refkey)[[1]]
+
+# calculate percentages
+keyr <- t(t(keymod) / colSums(keymod) * 100)
+
+# abbreviate keywords for plotting
+# longkey <- nchar(colnames(keyr)) > 15
+# abbkey <- sapply(colnames(keyr)[longkey], abbrevr::AbbrevTitle)
+# abbkey <- gsub("species", "sp.", abbkey)
+# colnames(keyr)[longkey] <- abbkey
+
+par(mfrow = c(2, 2), mar = c(0, 0, 0, 0), xpd = NA, oma = c(4, 1, 4, 1))
+for (i in 1:4) {
+  wi <- sort(keyr[i, ], decreasing = TRUE)[1:20]
+  wi <- keyr[i, keyr[i, ] > 1 / nrow(keyr) * 100]
+
+  neti <- delete_vertices(net1, mod1 != i)
+  ceni <- page_rank(neti)$vector
+  grplab <- paste(names(ceni)[order(ceni, decreasing = TRUE)], collapse = ", ")
+  labi <- paste0("Groupe ", i, ": ", grplab) |> breaks_string(each = 40)
+  labi <- gsub("<br>", "\n", labi)
+  wordcloud::wordcloud(
+    names(wi),
+    wi,
+    max.words = 20,
+    scale = c(2, .2),
+    random.order = FALSE,
+    colors = RColorBrewer::brewer.pal(8, "Dark2"),
+    rot.per = 0,
+  )
+  mtext(labi, side = ifelse(i < 3, 3, 1), line = ifelse(i < 3, 1, 2))
+  rect(par()$usr[1], par()$usr[3], par()$usr[2], par()$usr[4])
+}
 ```
 
 
+```{r}
+#| label: fig-wdiso
+#| fig-cap: "Nuages de mots-clé par projet isolé."
+#| fig.width: 8
+#| fig.height: 8
+keypro <- rowsum(t(stkey), ref$Project)
+dimnames(keypro)[[2]] <- dimnames(refkey)[[1]]
+
+# calculate percentages
+keyr <- t(t(keypro) / colSums(keypro) * 100)
 
 
+par(mfrow = c(2, 2), mar = c(0, 0, 0, 0), xpd = NA, oma = c(4, 1, 4, 1))
+for (i in which(row.names(keyr) %in% names(mod1)[mod1 == 5])) {
+  wi <- keyr[i, keyr[i, ] > 1 / nrow(keyr) * 100]
+  labi <- paste0("Disconnected - ", names(mod1)[i])
+  wordcloud::wordcloud(
+    names(wi),
+    wi,
+    max.words = 20,
+    scale = c(2, .2),
+    random.order = FALSE,
+    colors = RColorBrewer::brewer.pal(8, "Dark2"),
+    rot.per = 0,
+  )
+  mtext(labi, side = ifelse(i < 8, 3, 1), line = ifelse(i < 8, 1, 2))
+  rect(par()$usr[1], par()$usr[3], par()$usr[2], par()$usr[4])
+}
+```
 
-# Conclusion
 
-Mieux comprendre les relations entre les projets = mieux comprendre le context des recherches et de leur résultats.
+L'analyse de réseau a mis en avant 4 groupes principaux de projets. Les mots clés distinctifs de chaque groupe mettent en avant leur thématique (@fig-wdmod).  
+
+- Les projets du premier groupe (Beyonds, Elan, Spatman, Interface et Acoucène) utilisent des approches paysagères (géography, landscape) et socio-économiques (economics, sustainability, urbanization, business).   
+- Les projets du second groupe (Funbiodiv, Fellow, Motiver, Landbio, Indicators, Comepi) sont axés sur les écosystèmes agricoles et la mesure de l'impact des changements de pratiques agricoles sur la biodiversité.   
+- Les projets du troisième groupe (Solaire-pb, Desybel, Ebenn) sont des revues systématiques pour quantifier les impacts des activités humaines sur les espèces sauvages.
+- Enfin, les projets du quatrième groupe (Impacts, Landworm, Pppirec, Dragon, Tres-pratic, Funindic) modélisent la distribution des communautés biologiques (odonata pour Dragon, earthworm pour Landworm) en prenant en compte les interactions entre espèces (pollinator, trophic level), leurs traits, et en utilisant des données de sciences participatives.
+
+Quatre projets apparaissent non connectés au reste du réseau. Ceci ne traduit pas un manque de pertinence scientifique mais peut s'expliquer de part leur nature (les projets synergies sont plus petits et citent moins de référencess) et par leur spécialisation sur des questions ou des systèmes d'étude très spécifiques. Parmi les projets déconnectés (@fig-wdiso):
+
+- Carapat est spécialisé sur l'étude du pâturage (adaptatif multipaddock), c'est pourquoi il est thématiquement lié aux projets agronomes (groupe 2). 
+- Le projet Discar a une approche mécanistique et théorique de l'écologie et de la dynamique des populations. Il serait naturellement plus lié aux projets d'écologie (groupe 4), même si les fondements théoriques et les méthodes utilisées sont différents (d'où l'absence de connexions avec les autres projets). 
+- Le projet Fragshits porte sur la migrations des espèces forestières en montagnes ce qui est un cas d'écologie appliquée très spécifique; il peut être lié avec les projets d'écologie et de modélisation des populations (groupe 4), même si certains aspects sont liés aux approches paysagères et socio-économiques (groupe 1). 
+- Enfin le projet Rodexpo étudie l'exposition et la résistance aux rodenticides. Sa spécificité en réponse à une question précise semble le lier aux projets de méta-analyses (groupe 3) sans en utiliser les méthodes.
+
+
+## Conclusion
+
+Quantifier l’impact des pressions induites par les activités humaines sur la biodiversité terrestre mobilise plusieurs communautés scientifiques. L'analyse de réseau des affinités entre les 24 projets financés par le programme FRB-MTE-OFB montre que le programme finance quatre communautés scientifiques complémentaires: écologie des communautés (N=6+2); agro-écosystèmes (N=6+1); paysage socio-économique (N=5); et revues systématiques (N=3+1). Les liens observés entre projets suggèrent que les approches agronomiques, écologiques et socio-écologiques ne constituent pas des silos indépendants, mais forment un ensemble connecté par des chercheurs et des références scientifiques partagés. Une meilleure compréhension des enjeux traités par les projets financés permet de mieux contextualiser leurs résultats dans le cadre du programme.

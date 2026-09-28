@@ -10,9 +10,10 @@ Exploration with FRB-MTE-OFB dataset:
 
 4. [Exploration of bibliographic coupling](https://frbcesab.github.io/biblioscape/analysis/M6_explore_mte_coupling.html)
 
+5. [Exploration of bibliographic coupling](https://frbcesab.github.io/biblioscape/analysis/M7_summary.html)
 
 Exploration with CESAB dataset:    
 
-5. [Exploration of CESAB networks](https://frbcesab.github.io/biblioscape/analysis/C3_explore_cesab.html)    
+6. [Exploration of CESAB networks](https://frbcesab.github.io/biblioscape/analysis/C3_explore_cesab.html)    
 
-6. [Exploration of CESAB keywords and language](https://frbcesab.github.io/biblioscape/analysis/C4_explore_keywords.html)  
+7. [Exploration of CESAB keywords and language](https://frbcesab.github.io/biblioscape/analysis/C4_explore_keywords.html)  
