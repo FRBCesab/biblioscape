@@ -271,7 +271,7 @@ DT::datatable(info[order(score, decreasing = TRUE)[1:50], ])
 
 
 
-### Per project
+## Project references centrality
 
 ```{r}
 nrep <- 1000
@@ -422,7 +422,206 @@ The connectance of the citations per project is almost always higher than expect
 
 The values of average centrality and betweenness per project are less signigifant. Only Impacts have a significantly high betweeness, i.e their set of references connects multiple fields while Interface have a significantly low betweeness, i.e. their set of references  are not connected to other fields. In term of importance measured by eigen centrality, Landbio, FunBiodiv, Motiver, and Fellow are using highly central references; they are well aligned with the central theme of the programme. On the contrary, Ebenn, Elan, Desybel, Spatman, Rodexpo, Discar, Solaire-PB, Beyonds use references that are not within the central theme, i.e. exploring other themes.
 
+## Project bibliographic coupling
 
+We can also build a project network with the bibliographic coupling information. The nodes are the projects and the edges represent the connectance of the bipartite network between the references of two projects. 
+
+```{r}
+# calculate relations among project
+m1 <- as.matrix(as_adjacency_matrix(net1))
+pw <- c()
+upro <- sort(unique(ref$Project))
+for (i in 1:(length(upro) - 1)) {
+  ri <- ref$Short[ref$Project %in% upro[i]]
+  for (j in (i + 1):length(upro)) {
+    rj <- ref$Short[ref$Project %in% upro[j]]
+    mij <- m1[dimnames(m1)[[1]] %in% ri, dimnames(m1)[[2]] %in% rj]
+    nij <- graph_from_biadjacency_matrix(mij, weighted = TRUE)
+
+    pwij <- data.frame(
+      "p1" = upro[i],
+      "p2" = upro[j],
+      "N" = sum(mij > 0), #number of edges
+      "W" = mean(mij),
+      "C" = edge_density(nij, loops = FALSE)
+    )
+
+    pw <- rbind(pw, pwij)
+  }
+}
+```
+
+```{r}
+#| label: fig-netpro
+#| fig-cap: "Project network of the connectance of the bibliographic coupling. The color represents the modules. The shape indicates the type of project: triangle for systematic review, diamond for synergies and hexagons for synthesis. "
+
+# remove pairwize list with no commun edges
+pw <- pw[pw$N > 0, ]
+
+netP <- igraph::graph_from_data_frame(
+  d = pw,
+  directed = FALSE,
+)
+
+E(netP)$weight <- E(netP)$C
+# modularity
+modP <- cluster_optimal(netP) |> membership()
+
+V(netP)$type <- meta$Type[match(V(netP)$name, meta$Acronyme)]
+shape_conv <- c(
+  "REVUE SYSTEMATIQUE" = "triangle",
+  "SYNERGIE" = "diamond",
+  "SYNTHESE" = "hexagon"
+)
+V(netP)$shape <- shape_conv[V(netP)$type]
+V(netP)$year <- meta$Year[match(V(netP)$name, meta$Acronyme)]
+pal <- RColorBrewer::brewer.pal(max(modP), "Set2")
+V(netP)$color <- pal[modP]
+V(netP)$title <- paste(
+  V(netP)$name,
+  V(netP)$type,
+  V(netP)$year,
+  sep = "<br>"
+)
+V(netP)$group <- modP
+# E(net2)$color <- grDevices::adjustcolor("gray", alpha.f = 0.2)
+E(netP)$width <- E(netP)$C * 100
+E(netP)$title <- round(E(netP)$C, 2)
+E(netP)$color <- apply(igraph::as_edgelist(netP), 1, function(x) {
+  return(ifelse(modP[x[1]] != modP[x[2]], "#606060", pal[modP[x[1]]]))
+})
+
+visNetwork::visIgraph(
+  netP,
+  layout = "layout_with_fr",
+  weights = E(netP)$C,
+  idToLabel = FALSE,
+  randomSeed = 48
+) |>
+  visOptions(
+    highlightNearest = TRUE,
+    selectedBy = list(variable = "group", multiple = T)
+  ) |>
+  visPhysics(stabilization = FALSE)
+```
+
+This project network of bibliographic coupling is highly influenced by the number of citations per project (hence the project type). All projects are connected so the network structure is less interesting.
+
+
+Another alternative is to assign weights based on the average number of commun references and remove edges below a threshold at 0.05. 
+
+
+```{r}
+#| label: fig-altnetpro
+#| fig-cap: "Project network of the average bibliographic coupling. The color represents the modules. The shape indicates the type of project: triangle for systematic review, diamond for synergies and hexagons for synthesis. "
+
+# alternatives
+
+# remove pairwize list with low connectance
+# pw1 <- pw[pw$C > 0.05, ]
+
+# netP1 <- igraph::graph_from_data_frame(
+#   d = pw1,
+#   directed = FALSE,
+# )
+
+# E(netP1)$weight <- E(netP1)$C
+# # modularity
+# modP1 <- cluster_optimal(netP1) |> membership()
+
+# V(netP1)$type <- meta$Type[match(V(netP1)$name, meta$Acronyme)]
+# shape_conv <- c(
+#   "REVUE SYSTEMATIQUE" = "triangle",
+#   "SYNERGIE" = "diamond",
+#   "SYNTHESE" = "hexagon"
+# )
+# V(netP1)$shape <- shape_conv[V(netP1)$type]
+# V(netP1)$year <- meta$Year[match(V(netP1)$name, meta$Acronyme)]
+# pal <- RColorBrewer::brewer.pal(max(modP1), "Set2")
+# V(netP1)$color <- pal[modP1]
+# V(netP1)$title <- paste(
+#   V(netP1)$name,
+#   V(netP1)$type,
+#   V(netP1)$year,
+#   sep = "<br>"
+# )
+# V(netP1)$group <- modP1
+# # E(net2)$color <- grDevices::adjustcolor("gray", alpha.f = 0.2)
+# E(netP1)$width <- E(netP1)$C * 100
+# E(netP1)$title <- round(E(netP1)$C, 2)
+# E(netP1)$color <- apply(igraph::as_edgelist(netP1), 1, function(x) {
+#   return(ifelse(modP1[x[1]] != modP1[x[2]], "#606060", pal[modP1[x[1]]]))
+# })
+
+# visNetwork::visIgraph(
+#   netP1,
+#   layout = "layout_with_fr",
+#   weights = E(netP1)$C,
+#   idToLabel = FALSE,
+#   randomSeed = 48
+# ) |>
+#   visOptions(
+#     highlightNearest = TRUE,
+#     selectedBy = list(variable = "group", multiple = T)
+#   ) |>
+#   visPhysics(stabilization = FALSE)
+
+# remove pairwize list with low weights
+
+pw2 <- pw[pw$W > 0.05, ]
+
+netP2 <- igraph::graph_from_data_frame(
+  d = pw2,
+  directed = FALSE,
+)
+miss <- meta$Acronyme[!meta$Acronyme %in% V(netP2)$name]
+
+netP2 <- add_vertices(netP2, 1, name = miss)
+
+E(netP2)$weight <- E(netP2)$W
+# modularity
+modP2 <- cluster_optimal(netP2) |> membership()
+isolated <- components(netP2)$membership != 1
+modP2[!isolated] <- as.numeric(as.factor(modP2[!isolated]))
+modP2[isolated] <- max(modP2[!isolated]) + 1
+
+V(netP2)$type <- meta$Type[match(V(netP2)$name, meta$Acronyme)]
+shape_conv <- c(
+  "REVUE SYSTEMATIQUE" = "triangle",
+  "SYNERGIE" = "diamond",
+  "SYNTHESE" = "hexagon"
+)
+V(netP2)$shape <- shape_conv[V(netP2)$type]
+V(netP2)$year <- meta$Year[match(V(netP2)$name, meta$Acronyme)]
+pal <- RColorBrewer::brewer.pal(max(c(max(modP2), 3)), "Set2")
+V(netP2)$color <- pal[modP2]
+V(netP2)$title <- paste(
+  V(netP2)$name,
+  V(netP2)$type,
+  V(netP2)$year,
+  sep = "<br>"
+)
+V(netP2)$group <- modP2
+# E(net2)$color <- grDevices::adjustcolor("gray", alpha.f = 0.2)
+E(netP2)$width <- E(netP2)$W * 20
+E(netP2)$title <- round(E(netP2)$W, 2)
+E(netP2)$color <- apply(igraph::as_edgelist(netP2), 1, function(x) {
+  return(ifelse(modP2[x[1]] != modP2[x[2]], "#606060", pal[modP2[x[1]]]))
+})
+
+visNetwork::visIgraph(
+  netP2,
+  layout = "layout_with_fr",
+  weights = E(netP2)$W,
+  idToLabel = FALSE,
+  randomSeed = 48
+) |>
+  visOptions(
+    highlightNearest = TRUE,
+    selectedBy = list(variable = "group", multiple = T)
+  ) |>
+  visPhysics(stabilization = FALSE)
+```
 
 ## Appendix
 
@@ -445,6 +644,18 @@ pairs(
 #|
 pairs(
   info[, 2:8],
+  lower.panel = panel.smooth,
+  upper.panel = panel.cor
+)
+```
+
+
+```{r}
+#| label: fig-cornet
+#| fig-cap: "Correlation among project bibliographic coupling. N: number of references with co-citation, W: mean weight of the edges, i.e. average bibliographic coupling, C: connectance of the bipartite network."
+#|
+pairs(
+  pw[, 3:5],
   lower.panel = panel.smooth,
   upper.panel = panel.cor
 )
