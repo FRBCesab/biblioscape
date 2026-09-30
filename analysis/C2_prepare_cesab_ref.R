@@ -11,17 +11,24 @@
 
 # 0. Set-up --------------------------------------
 library(xml2)
+# remotes::install_github("FRBCesab/zoteror")
+library(zoteror)
+
 devtools::load_all()
+
 
 in_data <- here::here("data", "raw-data", "cesab")
 out_data <- here::here("data", "derived-data")
+
+frb_cesab <- zoteror::get_zotero_data("~/Zotero")
+# collections <- frb_cesab$collection |> unique()
 
 # 1. Simplify Zotero output ----------------------
 # Load the RDF file to get the folder structure
 rdf <- xml2::read_xml(file.path(in_data, "FRB-CESAB.rdf"))
 # Fetch XML namespaces
 ns <- xml_ns(rdf)
-# Get the collection : folder structure of the references
+# Get the collection : folder structure of the references ----
 collections <- xml_find_all(rdf, ".//z:Collection", ns)
 col_list <- lapply(collections, function(x) {
   folder_name <- xml_text(xml_find_first(x, ".//dc:title", ns))
@@ -41,7 +48,8 @@ col_df <- do.call(rbind, col_list)
 # projects with no references yet
 # col_df$folder[col_df$item_id == ""]
 
-# Get the article information
+# Get the article information ----
+# articles <- frb_cesab$title
 articles <- xml_find_all(rdf, ".//bib:Article", ns)
 art_list <- lapply(articles, function(x) {
   titles <- xml_find_all(x, ".//dc:title", ns)
@@ -54,7 +62,8 @@ art_list <- lapply(articles, function(x) {
 })
 art_df <- do.call(rbind, art_list)
 
-# Get DOI
+# Get DOI ----
+# journals <- frb_cesab$doi
 journals <- xml_find_all(rdf, ".//bib:Journal", ns)
 art_doi <- sapply(journals, function(x) {
   allid <- xml_text(xml_find_all(x, ".//dc:identifier", ns))
@@ -64,6 +73,7 @@ art_doi <- sapply(journals, function(x) {
 art_df$DOI <- art_doi
 
 # add Report, BookSection, Book, and Thesis
+reports <- frb_cesab$category
 reports <- xml_find_all(rdf, ".//bib:Report", ns) #3
 rep_list <- lapply(reports, function(x) {
   titles <- xml_find_all(x, ".//dc:title", ns)
@@ -147,7 +157,7 @@ df <- df[!df$folder %in% "Desybel", ]
 
 # Export as csv
 write.csv(df, file.path(out_data, "cesab_zotero.csv"), row.names = FALSE)
-
+df2 <- df
 
 # 2. Fecth OpenAlex data ----------------------
 df <- read.csv(file.path(out_data, "cesab_zotero.csv"))
@@ -166,7 +176,7 @@ oa <- openalexR::oa_fetch(
 # save output
 save(oa, file = file.path(out_data, "cesab_openalex.rdata"))
 
-
+oa <- load(file.path(out_data, "cesab_openalex.rdata"))
 # 3. Format as bibliometrix object -----------------
 oadata <- file.path(out_data, "cesab_openalex.rdata")
 

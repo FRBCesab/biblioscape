@@ -12,4 +12,6 @@ data/derived-data/cesab*
 
 R/plotfw.R
 
+*.html
+
 progress/*png

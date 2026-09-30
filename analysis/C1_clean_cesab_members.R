@@ -91,7 +91,7 @@ cesab$start_year[cesab$start_year == "NC"] <- "2026"
 # table(cesab$start_year)
 
 # 3. Export file
-write.csv(
+write.csv2(
   cesab,
   here::here("data", "derived-data", "cesab_members.csv"),
   row.names = FALSE

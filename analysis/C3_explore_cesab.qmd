@@ -46,6 +46,9 @@ cesab <- cesab[!cesab$function_in_group %in% c("Guest", "Stagiaire"), ]
 # remove non active members (and keep NA)
 cesab <- cesab[!cesab$still_member %in% 0, ]
 
+# add a column with merged Liastname and Firtsname
+cesab$name <- paste(cesab$lastname, cesab$firstname, sep = " ")
+
 # remove duplicates (mostly for Pelagic 1 and 2)
 cesab <- cesab[!duplicated(cesab[, c("group", "name")]), ]
 
