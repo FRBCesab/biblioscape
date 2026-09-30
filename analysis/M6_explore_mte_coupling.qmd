@@ -14,28 +14,12 @@ execute:
 
 The objective of this document is to explore the co-citations among the [FRB-MTE-OFB projects](https://www.fondationbiodiversite.fr/la-frb-en-action/programmes-et-projets/impacts-sur-la-biodiversite-terrestre-dans-lanthropocene/). The references were cleaned and completed in the scripts [01_clean_references.R](https://github.com/FRBCesab/biblioscape/blob/main/analysis/01_clean_references.R) and [02_fetch_openalex.R](https://github.com/FRBCesab/biblioscape/blob/main/analysis/02_fetch_openalex.R).   
 
-Estimate the distance among papers cited by projects using co-citations.
-The questions are:
-- how wide/narrow are the research projects?
-- how similar/interconnected are the projects? can we make group of projects based on their citations?
-- which are key work that are cited by many projects?
+The co-citations is a way to estimate the proximity among papers, hence a measure of research fields. The questions that can be answered are:  
 
-Nodes are all papers cited by the projects, and cited papers that are cited by at least two papers.
+- how wide/narrow are the research projects?  
+- which are key publications that are cited by many projects?  
+- how similar/interconnected are the projects? can we make group of projects based on their citations?  
 
-> The Co-Citation Network maps the intellectual structure of a research field by analyzing patterns in how documents cite the same references. Two references are co-cited when they are both cited by the same document. The more frequently two references are co-cited, the stronger their intellectual relationship. This technique, introduced by Small (1973), is one of the foundational methods of bibliometric analysis.
->
-> Co-citation analysis rests on two complementary approaches:  
-> - Co-citation (Small, 1973): Measures how often two references are cited together by subsequent publications. Highly co-cited references are perceived as intellectually related by the citing community. This method identifies the knowledge base of a field.
-> - Bibliographic coupling (Kessler, 1963): Measures the overlap in the reference lists of two documents. Documents that share many cited references are likely working on similar topics. This method identifies current research fronts.
->
-> Both approaches build networks where:
->   Nodes represent cited references (co-citation) or citing documents (bibliographic coupling)
->   Edges represent the strength of co-citation or bibliographic coupling between two nodes
->   Clusters represent distinct schools of thought, theoretical frameworks, or research traditions
-
-
-
-## General overview
 
 
 ```{r}
@@ -76,13 +60,78 @@ load(file.path(out_data, "mte_references_oa_shinycomplete.RData"))
 # dim(M) # 1047, 57
 ref$Short <- M$SR[match(ref$DOI, M$DI)]
 ref$FAut <- M$AU_CORR[match(ref$DOI, M$DI)]
+Last1 <- sapply(strsplit(ref$FAut, " "), function(x) x[[length(x)]])
+ref$shortname <- paste(firstup(Last1), ref$Year, sep = "_")
+# add short journal name
+# library(abbrevr)
+# conv <- data.frame(
+#   "ori" = sort(unique(M$SO))
+# )
+# conv$abb <- sapply(firstup(conv$ori), abbrevr::AbbrevTitle, USE.NAMES = FALSE)
+# write.csv(
+#   conv,
+#   here::here("data", "derived-data", "conv_journalM.csv"),
+#   row.names = FALSE
+# )
+conv <- read.csv(here::here("data", "derived-data", "conv_journalM.csv"))
+# conv <- conv[!duplicated(conv), ]
+mconv <- match(tolower(M$SO), tolower(conv$ori))
+
+ref$SO <- M$SO[match(ref$DOI, M$DI)]
+ref$shortjournal <- conv$abb[match(ref$SO, conv$ori)]
+
+ref$shorttitle <- substr(firstup(ref$Title), 1, 30)
+ref$breaktitle <- breaks_string(firstup(ref$Title))
+ref$linkDOI <- paste0(
+  "<a href=\'",
+  paste0("https://www.doi.org/", ref$DOI),
+  "\'>",
+  ref$DOI,
+  "</a>"
+)
+
+infoR <- tapply(ref$Project, ref$DOI, paste, collapse = "<br>")
+uref <- data.frame(
+  "DOI" = names(infoR),
+  "projects" = as.character(infoR)
+)
+keepC <- c(
+  "shortname",
+  "shortjournal",
+  "shorttitle",
+  "breaktitle",
+  "linkDOI",
+  "FAut",
+  "Short"
+)
+uref[, keepC] <- ref[match(uref$DOI, ref$DOI), keepC]
+# remove duplicates
+dup <- duplicated(uref$shortname) & !is.na(uref$FAut)
+uref$shortname[dup] <- paste(uref$shortname[dup], 2, sep = "_")
+dup <- duplicated(uref$shortname) & !is.na(uref$FAut)
+uref$shortname[dup] <- gsub("_2$", "_3", uref$shortname[dup])
+dup <- duplicated(uref$shortname) & !is.na(uref$FAut)
+uref$shortname[dup] <- gsub("_3$", "_4", uref$shortname[dup])
 ```
 
 
 
-## Co-citation network
+## Bibliographic coupling network
+
+Bibliographic coupling network are made of nodes representing all papers cited by the projects, and edges that quantifies the number of commun references among two papers.  
+
+
+> Quoting Bibliometrix documentation
+>
+> "The Co-Citation Network maps the intellectual structure of a research field by analyzing patterns in how documents cite the same references. Two references are co-cited when they are both cited by the same document. The more frequently two references are co-cited, the stronger their intellectual relationship. This technique, introduced by Small (1973), is one of the foundational methods of bibliometric analysis." "
+>
+> The approach of bibliographic coupling was introduced by Kessler, 1963. It measures the overlap in the reference lists of two documents. Documents that share many cited references are likely working on similar topics. This method identifies current research fronts.
+
 
 ```{r}
+#| label: fig-netcoup
+#| fig-cap: "Bibliographic coupling network of the references cited by FRB-MTE-OFB program. Nodes are articles and edges represent the shared cited references. The colors represent the centrality (eigen value) and the size of the node represent its betweenness."
+
 # get the co-citation network of references
 NetMatrix <- bibliometrix::biblioNetwork(
   M,
@@ -92,10 +141,8 @@ NetMatrix <- bibliometrix::biblioNetwork(
   short = FALSE,
   sep = ";"
 )
-dim(NetMatrix) # 1035
+# dim(NetMatrix) # 1047
 # table(M$SR %in% dimnames(NetMatrix)[[1]])
-
-# 46722 references with 627 original references
 
 net1 <- igraph::graph_from_adjacency_matrix(
   NetMatrix,
@@ -104,23 +151,20 @@ net1 <- igraph::graph_from_adjacency_matrix(
   weighted = TRUE
 )
 
-
 # delete non connected literature
 # net2 <- delete_vertices(net1, degree(net1) == 0)
 net2 <- delete_vertices(net1, components(net1)$membership != 1)
 
 # modularity
-mod2 <- cluster_walktrap(net2)
-clu2 <- membership(mod2)
-sclu2 <- ifelse(clu2 <= (sum(table(clu2) > 1)), clu2, "isolated")
-sclu2 <- as.factor(sclu2)
-cclu <- colorspace::qualitative_hcl(n = nlevels(sclu2), palette = "Dark 3")
-cclu[levels(sclu2) == "isolated"] <- "#808080" # grey
-col2 <- cclu[sclu2]
-
+# mod2 <- cluster_walktrap(net2)
+# clu2 <- membership(mod2)
+# sclu2 <- ifelse(clu2 <= (sum(table(clu2) > 1)), clu2, "isolated")
+# sclu2 <- as.factor(sclu2)
+# cclu <- colorspace::qualitative_hcl(n = nlevels(sclu2), palette = "Dark 3")
+# cclu[levels(sclu2) == "isolated"] <- "#808080" # grey
+# col2 <- cclu[sclu2]
 
 deg2 <- degree(net2)
-
 # V(net1)$size <- sqrt(degree(net1))
 # V(netREF)$label <- ref$Short[match(V(net1)$name, ref$Short)]
 # V(netREF)$year <- ref$Year[match(V(netREF)$name, ref$DOI)]
@@ -134,42 +178,75 @@ deg2 <- degree(net2)
 #   V(netREF)$shorttitle,
 #   sep = "<br>"
 # )
-table(membership(mod2))
-V(net2)$group <- membership(mod2)
-V(net2)$color <- col2
 
-# check out other layout
+# modularity not really useful
+# table(membership(mod2))
+# V(net2)$group <- membership(mod2)
+
+cen2 <- eigen_centrality(net2)$vector
+V(net2)$color <- pals::viridis(10)[cut(cen2, seq(0, 1, 0.1))]
+
+ben2 <- betweenness(net2)
+V(net2)$size <- 8 + (ben2 / max(ben2) * 20)
+V(net2)$label <- NA
+
+E(net2)$color <- grDevices::adjustcolor("gray", alpha.f = 0.2)
+E(net2)$width <- 0.05
+
 visNetwork::visIgraph(
   net2,
-  layout = "layout_with_kk",
-  idToLabel = FALSE
+  layout = "layout_with_fr",
+  weights = E(net2)$weight,
+  idToLabel = FALSE,
+  randomSeed = 48
 ) |>
   visOptions(
-    highlightNearest = TRUE,
-    selectedBy = list(variable = "group", multiple = T)
+    highlightNearest = TRUE
   )
 ```
 
-The network has ```r vcount(net2)``` nodes (one node = one article) and ```r ecount(net2)``` edges (one edge = shared citation between two articles). The connectance is ```r round(edge_density(net2, loops = FALSE),3)``` and the modularity ```r round(modularity(mod2),2)```
+The network has ```r vcount(net1)``` nodes (one node = one article) and ```r scales::comma(ecount(net1), big.mark = " ")``` edges (one edge = shared citation between two articles). The connectance is ```r round(edge_density(net1, loops = FALSE),3)```, which is relatively low.
 
+We can measure the centrality of references by measuring:
+- **degree**: number of connections
+- **centrality**: influence measured as the eigen value of the node.
+- **betweenness**: number of shortest paths going through a node
 
 ```{r}
+#| label: fig-refcen
+#| fig-cap: "Reference centrality measured with the betweenness (x-axis), the eigen centrality (y-axis) and the degree (color)."
+
 centR <- data.frame(
-  "betweenness" = betweenness(net2),
-  "degree" = degree(net2),
-  "pagerank" = page_rank(net2)$vector,
-  "lab" = V(net2)$name
+  "betweenness" = betweenness(net1),
+  "eigen" = eigen_centrality(net1)$vector,
+  "degree" = degree(net1),
+  "pagerank" = page_rank(net1)$vector,
+  "harmo_cen" = harmonic_centrality(net1),
+  "closeness" = closeness(net1)
+)
+
+
+mu <- match(row.names(centR), uref$Short)
+lab <- paste(
+  uref$shortname[mu],
+  uref$shortjournal[mu],
+  uref$shorttitle[mu],
+  uref$projects[mu],
+  sep = "<br>"
 )
 
 plot_ly(centR) |>
   add_markers(
     x = ~betweenness,
-    y = ~pagerank,
-    size = ~degree,
-    text = ~lab,
+    y = ~eigen,
+    color = ~degree,
+    text = lab,
     hoverinfo = "text"
   ) |>
-  layout(title = "Reference centrality") |>
+  layout(
+    title = "Reference centrality",
+    yaxis = list(title = "Centrality (eigen)")
+  ) |>
   config(
     modeBarButtons = list(list("toImage")),
     displaylogo = FALSE
@@ -177,38 +254,198 @@ plot_ly(centR) |>
 ```
 
 ```{r}
-info <- apply(centR[, -4], 2, round, 5)
+#| label: tbl-refcen
+#| tbl-cap: "Reference centrality based on shared members. The degree is the number of connections to other projects, the Google PageRank measures the influence based on the number and the importance of connected project and the betweenness is the number of shortest paths going through a project."
+info <- apply(centR[, -(4:6)], 2, round, 5)
 score <- apply(scale(sqrt(info)), 1, mean)
 info <- as.data.frame(info)
+mu <- match(row.names(info), uref$Short)
+row.names(info) <- ifelse(
+  is.na(mu) | grepl("^NA,", row.names(info)),
+  row.names(info),
+  uref$shortname[mu]
+)
 DT::datatable(info[order(score, decreasing = TRUE)[1:50], ])
 ```
+
+
 
 
 ### Per project
 
 ```{r}
-info <- c()
-for (i in unique(ref$Project)) {
-  subi <- delete_vertices(
-    net2,
-    !V(net2)$name %in% ref$Short[ref$Project == i]
-  )
-  ni <- c("P" = i, "N" = vcount(subi), "C" = edge_density(subi))
-  info <- rbind(info, ni)
-}
-info <- as.data.frame(info)
-info$N <- as.numeric(info$N)
-info$C <- as.numeric(info$C)
+nrep <- 1000
+# info <- c()
+# for (i in unique(ref$Project)) {
+#   subi <- delete_vertices(
+#     net2,
+#     !V(net2)$name %in% ref$Short[ref$Project == i]
+#   )
+#   subr <- centR[row.names(centR) %in% ref$Short[ref$Project %in% i], ]
+
+#   ni <- data.frame(
+#     "P" = i,
+#     "N" = vcount(subi),
+#     "W" = mean(E(subi)$weight),
+#     "C" = edge_density(subi),
+#     "wC" = sum(E(subi)$weight) / (vcount(subi) * (vcount(subi) - 1)),
+#     "Betweeness" = mean(subr$betweenness),
+#     "Pagerank" = mean(subr$pagerank),
+#     "Eigen" = mean(subr$eigen)
+#   )
+
+#   # calculate p-value
+#   booti <- list()
+#   for (j in 1:nrep) {
+#     bj <- sample(1:vcount(net2), ni$N, replace = FALSE)
+#     subj <- delete_vertices(net2, !1:vcount(net2) %in% bj)
+#     cenj <- centR[bj, ]
+#     booti[[j]] <- c(
+#       "W" = mean(E(subj)$weight),
+#       "C" = edge_density(subj),
+#       "wC" = sum(E(subj)$weight) / (vcount(subj) * (vcount(subj) - 1)),
+#       "Betweeness" = mean(cenj$betweenness),
+#       "Pagerank" = mean(cenj$pagerank),
+#       "Eigen" = mean(cenj$eigen)
+#     )
+#   }
+#   booti <- do.call(rbind, booti) |> as.data.frame()
+
+#   # p-value for higher values
+#   # ni$C_pval <- sum(booti$C > ni$C) / nrep
+#   ni[paste0("C_", c("pval", "sig"))] <- pval(ni$C, booti$C, mode = "high")
+#   ni[paste0("wC_", c("pval", "sig"))] <- pval(ni$wC, booti$wC, mode = "high")
+#   ni[paste0("W_", c("pval", "sig"))] <- pval(ni$W, booti$W, mode = "high")
+#   # p-value for higher or lower value
+#   ni[paste0("Bet_", c("pval", "sig"))] <- pval(
+#     ni$Betweeness,
+#     booti$Betweeness,
+#     mode = "all"
+#   )
+#   ni[paste0("PR_", c("pval", "sig"))] <- pval(
+#     ni$Pagerank,
+#     booti$Pagerank,
+#     mode = "all"
+#   )
+#   ni[paste0("Eig_", c("pval", "sig"))] <- pval(
+#     ni$Eigen,
+#     booti$Eigen,
+#     mode = "all"
+#   )
+#   info <- rbind(info, ni)
+# }
+
+# write.csv(
+#   info,
+#   file.path(out_data, "mte_citation_metrics.csv"),
+#   row.names = FALSE
+# )
+
+info <- read.csv(file.path(out_data, "mte_citation_metrics.csv"))
+```
+
+```{r}
+#| label: fig-procon
+#| fig-cap: "Bibliography network per project measuring the number of references (N, x-axis) and their connecance (C, y-axis). The significance of the connectance (considering the number of nodes) is represented by the size of the dot, while its color show the project type."
+
+info$Type <- meta$Type[match(info$P, meta$Acronyme)]
+info$C_size <- as.numeric(seq(1, 2, length.out = 4)[as.factor(info$C_sig)])
+info$lab1 <- paste(
+  info$P,
+  "<br> N=",
+  info$N,
+  "<br> C=",
+  round(info$C, 2),
+  info$C_sig
+)
+
 plot_ly(info) |>
   add_markers(
     x = ~N,
     y = ~C,
-    text = ~P,
-    hoverinfo = "text"
+    text = ~lab1,
+    color = ~Type,
+    size = ~C_size,
+    hoverinfo = "text",
   ) |>
-  layout(title = "Project bibliographic coupling") |>
+  layout(
+    title = "Project bibliography"
+  ) |>
   config(
     modeBarButtons = list(list("toImage")),
     displaylogo = FALSE
   )
+```
+
+```{r}
+#| label: fig-procen
+#| fig-cap: "Bibliography network centrality per project showing the average betweenness (x-axis), and centrality (y-axis) per project. The size of the dot represent the connectance of the project network; its color represents the project type."
+#| 
+
+info$lab2 <- paste(
+  info$P,
+  "<br> N=",
+  info$N,
+  "<br> C=",
+  round(info$C, 2),
+  info$C_sig,
+  "<br> Betweenness=",
+  round(info$Betweeness),
+  info$Bet_sig,
+  "<br> Centrality (eig)=",
+  round(info$Eigen, 2),
+  info$Eig_sig
+)
+plot_ly(info) |>
+  add_markers(
+    x = ~Betweeness,
+    y = ~Eigen,
+    size = info$C * 6,
+    color = ~Type,
+    text = ~lab2,
+    hoverinfo = "text" #,
+    #showlegend = FALSE
+  ) |>
+  layout(
+    title = "Project bibliographic centrality",
+    yaxis = list(title = "Centrality (eigen)")
+  ) |>
+  config(
+    modeBarButtons = list(list("toImage")),
+    displaylogo = FALSE
+  )
+```
+
+The number of citations per project is highly variable and depends on the project type. This might influence the different network metrics. To avoid such bias, we compared the values with what could be expected if the same number of references were randomly selected among the bibliographic coupling network. 
+
+The connectance of the citations per project is almost always higher than expected by chance: the citations of a project are highly connected, i.e. citing the same litterature. The connectance is not significantly higher than expected for Spatman and Elan which indicates that they use more diverse citations (possibly high multi-disciplinarity).
+
+The values of average centrality and betweenness per project are less signigifant. Only Impacts have a significantly high betweeness, i.e their set of references connects multiple fields while Interface have a significantly low betweeness, i.e. their set of references  are not connected to other fields. In term of importance measured by eigen centrality, Landbio, FunBiodiv, Motiver, and Fellow are using highly central references; they are well aligned with the central theme of the programme. On the contrary, Ebenn, Elan, Desybel, Spatman, Rodexpo, Discar, Solaire-PB, Beyonds use references that are not within the central theme, i.e. exploring other themes.
+
+
+
+## Appendix
+
+```{r}
+#| label: fig-corcen
+#| fig-cap: "Correlation among centrality measures. Most centrality measures are linked to the number of edges (degrees). We selected Betwenness and Eigen centrality as they quantify different aspect of 'centrality'."
+#|
+
+pairs(
+  centR[components(net1)$membership == 1, ],
+  lower.panel = panel.smooth,
+  upper.panel = panel.cor
+)
+```
+
+
+```{r}
+#| label: fig-corpro
+#| fig-cap: "Correlation among project average network indices. N: number of nodes, W: mean weight of the edges, C: connectance, wC: weigthed connectance considering the number and the weight of the edges, Betweenness, Pagerank, and Eigen are the average centrality measure of the references per project."
+#|
+pairs(
+  info[, 2:8],
+  lower.panel = panel.smooth,
+  upper.panel = panel.cor
+)
 ```
