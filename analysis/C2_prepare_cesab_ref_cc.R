@@ -9,17 +9,35 @@ in_data <- here::here("data", "raw-data", "cesab")
 out_data <- here::here("data", "derived-data")
 
 ## Import the liste of Cesab members to cross with the list of authors
-members <- read.csv2("data/derived-data/cesab_members.csv")
-members$group %>% unique() # 73 groups in total
+cesab <- read.csv2(here::here(out_data, "cesab_members.csv"))
+cesab$group %>% unique() # 73 groups in total
 
-# create a bipartite graph of cesab members and cesab groups, link if member belongs to a group
+
+# remove guest and stagiaire
+cesab <- cesab[!cesab$function_in_group %in% c("Guest", "Stagiaire"), ]
+
+# remove non active members (and keep NA)
+cesab <- cesab[!cesab$still_member %in% 0, ]
+
+# add a column with merged Liastname and Firtsname
+cesab$name <- paste(cesab$lastname, cesab$firstname, sep = " ")
+
+# remove duplicates (mostly for Pelagic 1 and 2)
+cesab <- cesab[!duplicated(cesab[, c("group", "name")]), ]
+
+infoV <- tapply(cesab$group, cesab$name, paste, collapse = "<br>")
+
+nmem <- table(cesab$group)
+nproj <- table(table(cesab$name))
+
+# create a bipartite graph of cesab cesab and cesab groups, link if member belongs to a group
 netBI <- igraph::graph_from_data_frame(
-  members[, c("name", "group")]
+  cesab[, c("name", "group")]
 )
-# distinguish between the 2 levels: some are groups (TRUE), some are members (FALSE)
-V(netBI)$type <- V(netBI)$name %in% members$group
+# distinguish between the 2 levels: some are groups (TRUE), some are cesab (FALSE)
+V(netBI)$type <- V(netBI)$name %in% cesab$group
   
-# assign blue squares to groups, red dots to members
+# assign blue squares to groups, red dots to cesab
 V(netBI)$color <- ifelse(V(netBI)$type, "blue", "red")
 V(netBI)$shape <- ifelse(V(netBI)$type, "square", "dot")
 
@@ -34,7 +52,7 @@ V(netBI)$title <- paste(
   sep = "<br>"
 )
 
-# remove members that are not connected to multiple groups
+# remove cesab that are not connected to multiple groups
 # for visualization purpose only
 showBI <- delete_vertices(netBI, degree(netBI) == 1)
 E(showBI)$arrow.mode <- 0
@@ -56,7 +74,7 @@ plot(degree_distribution(netBI, cumulative = TRUE),type="l")
 
 # Graph showing only member vertices that are linked if they share a group ?
 g <- bipartite_projection(netBI, multiplicity = TRUE)
-g_members <- g$proj1
+g_cesab <- g$proj1
 g_groups <- g$proj2
 
 
@@ -77,7 +95,11 @@ visNetwork::visIgraph(
 
 
 ## Cesab authorship network : extract all authors from the Cesab publication list, distinguish 2 groups based on whether or not authors are part of a Cesab group
-# vertices = authors, links = co-authors, clusters = cesab groups ?
+# vertices = authors, links = co-authors, colors = cesab groups ?
+# aim : to plot a network where 2 authors are linked if co-authors and see if external colaborators are clustered together, 
+# or if they are linked to the Cesab community by only 1 link ?
+
+
 # vertices = publications, links = co-authors, clusters = cesab groups ?
 
 ## Get the list of Cesab publications and remove Core
@@ -139,25 +161,41 @@ df <- dplyr::left_join(
   authors
 )
 
-# now try this with the members names:
-members$names_simple <- paste(members$lastname, members$firstname, sep = ", ")
-members$names_simple <- sapply(members$names_simple, initials) |>
+# now try this with the cesab names:
+cesab$names_simple <- paste(cesab$lastname, cesab$firstname, sep = ", ")
+cesab$names_simple <- sapply(cesab$names_simple, initials) |>
   sapply(X = _, clean_string)
 
 # add column is_cesab
 df$is_cesab <- ifelse(
-  df$author_simple %in% members$names_simple,
+  df$author_simple %in% cesab$names_simple,
   TRUE, FALSE
 )
+
+
 
 # vertices = authors, links = co-authors, clusters = cesab groups ?
 # create a bipartite graph of authors, link if co-authors
 net_coauth <- igraph::graph_from_data_frame(
   df[, c("author_simple", "doi")]
+) 
+ 
+# distinguish between the 2 levels: some are cesab cesab (TRUE), some are external (FALSE)
+V(net_coauth)$is_cesab <- ifelse(
+  V(net_coauth)$name %in% cesab$names_simple,
+  TRUE, FALSE
 )
 
+# assign blue dots to cesab members, red dots to external, green squares for papers
+V(net_coauth)$color <- ifelse(V(net_coauth)$name %in% cesab$names_simple, "blue", "red")
+V(net_coauth)$color[which(V(net_coauth)$name %in% df$doi)] <- "green"
+V(net_coauth)$shape <- ifelse(V(net_coauth)$name %in% df$doi, "square", "dot")
+
+
+# simplify network and remove unique links: see whether interconnections are more intense between cesab memebers or with the outside ?
 net_c <- delete_vertices(net_coauth, degree(net_coauth) == 1)
 E(net_c)$arrow.mode <- 0
+
 
 visNetwork::visIgraph(
   net_c,
@@ -169,21 +207,61 @@ visNetwork::visIgraph(
     highlightNearest = TRUE
   )
 
-# distinguish between the 2 levels: some are groups (TRUE), some are members (FALSE)
-V(net_coauth)$type <- V(net_coauth)$name_simple %in% df$doi
-  
-# assign blue squares to groups, red dots to members
-V(net_coauth)$color <- ifelse(V(net_coauth)$type, "blue", "red")
-V(net_coauth)$shape <- ifelse(V(net_coauth)$type, "square", "dot")
 
 
-V(net_coauth)$title <- paste(
-  V(net_coauth)$name,
-  extra,
-  sep = "<br>"
-)
 
-# remove members that are not connected to multiple groups
+# now make 2 separate bipartite networks: 
+# - 1 for publications (DOIs). Vertices
+# - 1 for authors
+
+
+V(net_coauth)$type <- V(net_coauth)$name %in% df$author_simple
+split_coauth <- bipartite_projection(net_coauth, multiplicity = TRUE)
+
+netpub <- split_coauth$proj1
+
+# plot network showing both types of vertices : 
+netpub_c <- delete_vertices(netpub, degree(netpub) == 1)
+E(netpub_c)$arrow.mode <- 0
+
+visNetwork::visIgraph(
+  netpub_c,
+  randomSeed = 25,
+  layout = "layout_with_fr", #layout_with_kk, layout_nicely
+  smooth = TRUE
+) |>
+  visNetwork::visOptions(
+    highlightNearest = TRUE
+  )
+
+
+
+
+
+
+netauth <- split_coauth$proj2
+
+# assign blue squares to groups, red dots to cesab
+V(netauth)$color <- ifelse(V(netauth)$is_cesab, "blue", "red")
+V(netauth)$shape <- ifelse(V(netauth)$is_cesab, "square", "dot")
+
+# plot network showing both types of vertices : 
+netauth_c <- delete_vertices(netauth, degree(netauth) == 1)
+E(netauth_c)$arrow.mode <- 0
+
+visNetwork::visIgraph(
+  netauth_c,
+  randomSeed = 25,
+  layout = "layout_with_fr", #layout_with_kk, layout_nicely
+  smooth = TRUE
+) |>
+  visNetwork::visOptions(
+    highlightNearest = TRUE
+  )
+
+
+
+# remove cesab that are not connected to multiple groups
 # for visualization purpose only
 showBI <- delete_vertices(net_coauth, degree(net_coauth) == 1)
 E(showBI)$arrow.mode <- 0
@@ -200,7 +278,59 @@ visNetwork::visIgraph(
 
 
 igraph::degree(net_coauth, mode = "out") %>% sort(., decreasing = TRUE) %>% barplot()
+igraph::degree(netauth, mode = "out") %>% sort(., decreasing = TRUE) %>% barplot()
 plot(degree_distribution(net_coauth, cumulative = TRUE),type="l")
+
+
+
+
+
+
+### Openalex : retrive fields and keywords
+options(openalexR.mailto = "camille.coux@fondationbiodiversite.fr")
+
+dois <- unique(cesab_pub$doi)[1:10]
+
+res <- openalexR::oa_fetch(
+  entity  = "works",
+  doi     = dois,
+  verbose = TRUE
+)
+
+# Topics are in long format: one row per hierarchy level
+# (topic, subfield, field, domain), so pivot to one row per topic
+topics_df <- res |>
+  dplyr::select(doi, topics) |>
+  tidyr::unnest(topics) |>
+  dplyr::select(doi, i, type, display_name) |>
+  tidyr::pivot_wider(names_from = type, values_from = display_name)
+
+topics <- unique(topics_df$topic)
+subfield <- unique(topics_df$subfield)
+field <- unique(topics_df$field)
+
+
+keywords_df <- res |>
+  dplyr::select(doi, keywords) |>
+  tidyr::unnest(keywords)
+
+kw_ex <- keywords_df |>
+  dplyr::filter(doi ==  "https://doi.org/10.1111/gcb.13201") |>
+  dplyr::select(display_name) |> 
+  as.vector()
+
+table(keywords_df$doi) |> as.vector()
+
+
+concepts_df <- res |>
+  dplyr::select(doi, concepts) |>
+  tidyr::unnest(concepts)
+
+concepts_ex <- concepts_df |>
+  dplyr::filter(doi ==  "https://doi.org/10.1111/gcb.13201") |>
+  dplyr::select(display_name) |> 
+  as.vector()
+
 
 
 

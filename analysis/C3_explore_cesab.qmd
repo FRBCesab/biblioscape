@@ -26,6 +26,7 @@ The objective is this document is to explore the diversity and interconnectednes
 #| echo: false
 devtools::load_all()
 
+
 library(igraph)
 library(visNetwork)
 library(plotly)
@@ -35,8 +36,9 @@ library(bibliometrix) # to build citation networks
 library(abbrevr)
 
 # load reference list
+
 out_data <- here::here("data", "derived-data")
-cesab <- read.csv(
+cesab <- read.csv2(
   here::here("data", "derived-data", "cesab_members.csv")
 )
 
