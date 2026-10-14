@@ -443,7 +443,8 @@ for (i in 1:(length(upro) - 1)) {
       "p2" = upro[j],
       "N" = sum(mij > 0), #number of edges
       "W" = mean(mij),
-      "C" = edge_density(nij, loops = FALSE)
+      "C" = sum(mij > 0) / (nrow(mij) * ncol(mij))
+      # edge_density(nij, loops = FALSE) doesn't work for bipartite
     )
 
     pw <- rbind(pw, pwij)

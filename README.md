@@ -73,6 +73,18 @@ quarto::quarto_render("analysis/C3_explore_cesab.qmd")
 quarto::quarto_render("analysis/C4_explore_keywords.qmd")
 ```
 
+4. explore [CESAB keywords and language](https://frbcesab.github.io/biblioscape/analysis/C4_explore_keywords.html)    
+```r
+quarto::quarto_render("analysis/C5_summary_cesab.qmd")
+```
+
+
+4. explore [CESAB keywords and language](https://frbcesab.github.io/biblioscape/analysis/C4_explore_keywords.html)    
+```r
+quarto::quarto_render("slides/labmeeting_20102026.qmd")
+```
+
+
 
 ### Online index
 

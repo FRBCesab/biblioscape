@@ -1,0 +1,53 @@
+---
+format: 
+  revealjs:
+    auto-stretch: false
+    disableLayout: true
+    include-in-header: layout-fix.html
+execute:
+  echo: false
+  warning: false
+---
+
+
+```{r}
+library(igraph)
+library(visNetwork)
+
+g <- make_graph("Franklin")
+V(g)$title <- LETTERS[V(g)]
+
+visNetwork::visIgraph(g) |>
+  visInteraction(
+    hover = TRUE,
+    selectable = TRUE
+  ) |>
+  visOptions(
+    highlightNearest = list(
+      enabled = TRUE
+    )
+  )
+```
+
+<!--
+F12, in the console:  
+window.dispatchEvent(new Event('resize'))
+fix the issue of mouse position
+-->
+
+
+## slide 2
+
+
+```{r}
+visNetwork::visIgraph(g) |>
+  visInteraction(
+    hover = TRUE,
+    selectable = TRUE
+  ) |>
+  visOptions(
+    highlightNearest = list(
+      enabled = TRUE
+    )
+  )
+```

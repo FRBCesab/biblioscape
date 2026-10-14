@@ -1,0 +1,29 @@
+---
+from: markdown+emoji
+format: 
+  revealjs:
+    logo: img/cesab-logo.png
+    auto-stretch: false
+    disableLayout: true
+    include-in-header: layout-fix.html
+    toc-depth: 1
+    smaller: true
+    footer: "{{< fa brands github >}} &nbsp;[`Bibliometric network analysis`](https://github.com/FRBCesab/biblioscape) &nbsp; &bull; &nbsp; {{< fa brands creative-commons >}} {{< fa brands creative-commons-by >}} &nbsp;[`cc-by-4.0`](https://creativecommons.org/licenses/by/4.0/deed.en)"
+execute:
+  echo: false
+  warning: false
+---
+
+```{r}
+#| child: "slides/title.qmd"
+```
+
+
+```{r}
+#| child: "slides/cesabquiz.qmd"
+```
+
+
+```{r}
+#| child: "slides/network_analysis.qmd"
+```

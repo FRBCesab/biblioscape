@@ -1,0 +1,33 @@
+<br>
+
+<!-- Centered image -->
+:::: {.columns}
+
+::: {.column .logo width="10%"}
+
+::: 
+::: {.column .logo width="80%"}
+![](img/CESAB_network.png)
+:::
+
+::: {.column .logo width="10%"}
+
+::: 
+
+::::
+
+<!-- Centered title -->
+:::{.r-stack style="font-size: 2em;"}
+Network analysis of CESAB projects
+:::
+
+<br>
+
+:::{.r-stack}
+October 20th, 2026
+:::
+
+:::{.r-stack}
+Romain Frelat and Camille Coux
+:::
+
